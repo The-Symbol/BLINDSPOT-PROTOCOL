@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      #joystick { position: relative; width: 100px; height: 100px; }
+      #knob { position: absolute; left: 50%; top: 50%; }
+      #look { width: 600px; height: 100px; }
+    </style>
+  </head>
+  <body>
+    <div id="joystick"><i id="knob"></i></div><div id="look"></div>
+    <pre id="test-results" data-status="running"></pre>
+    <script type="module">
+      import { applyTouchLook, joystickState, requestLandscapeMode } from "./mobile-controls.js";
+      const result = document.getElementById("test-results");
+      const joystick = document.getElementById("joystick");
+      const knob = document.getElementById("knob");
+      const look = document.getElementById("look");
+      const input = { forward: false, back: false, left: false, right: false };
+      let joystickPointer = null;
+      let lookPointer = null;
+      let angle = 0;
+      let lastLookX = 0;
+      const assert = (condition, message) => { if (!condition) throw new Error(message); };
+      joystick.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
+      joystick.addEventListener("pointerdown", (event) => {
+        if (joystickPointer !== null) return;
+        joystickPointer = event.pointerId;
+      });
+      joystick.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== joystickPointer) return;
+        const state = joystickState(event.clientX, event.clientY, joystick.getBoundingClientRect());
+        Object.assign(input, {
+          forward: state.forward,
+          back: state.back,
+          left: state.left,
+          right: state.right,
+        });
+        knob.style.transform = `translate(${state.x}px,${state.y}px)`;
+      });
+      joystick.addEventListener("pointerup", (event) => {
+        if (event.pointerId !== joystickPointer) return;
+        joystickPointer = null;
+        Object.assign(input, { forward: false, back: false, left: false, right: false });
+        knob.style.transform = "translate(-50%,-50%)";
+      });
+      look.addEventListener("pointerdown", (event) => {
+        if (lookPointer !== null || event.clientX < 228) return;
+        lookPointer = event.pointerId;
+        lastLookX = event.clientX;
+      });
+      look.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== lookPointer) return;
+        angle = applyTouchLook(angle, event.clientX - lastLookX, 1);
+        lastLookX = event.clientX;
+      });
+      look.addEventListener("pointerup", (event) => {
+        if (event.pointerId === lookPointer) lookPointer = null;
+      });
+      const pointer = (type, id, x, y) => new PointerEvent(type, { bubbles: true, pointerId: id, clientX: x, clientY: y });
+      try {
+        joystick.dispatchEvent(pointer("pointerdown", 1, 50, 50));
+        joystick.dispatchEvent(pointer("pointermove", 1, 100, 0));
+        assert(input.forward && input.right, "摇杆 PointerEvent 未转换为前进+右移");
+        assert(knob.style.transform.includes("25.455"), "摇杆位移未应用至 DOM");
+        joystick.dispatchEvent(pointer("pointermove", 2, 0, 100));
+        assert(input.forward && input.right, "非所有者指针不应抢占摇杆");
+        joystick.dispatchEvent(pointer("pointerup", 1, 100, 0));
+        assert(!Object.values(input).some(Boolean), "摇杆松开后输入未重置");
+        assert(knob.style.transform.replaceAll(" ", "") === "translate(-50%,-50%)", "摇杆松开后视觉状态未复位");
+
+        look.dispatchEvent(pointer("pointerdown", 3, 300, 20));
+        look.dispatchEvent(pointer("pointermove", 3, 340, 20));
+        assert(Math.abs(angle - 0.24) < 0.0001, "触控视角没有按灵敏度更新");
+        look.dispatchEvent(pointer("pointermove", 4, 500, 20));
+        assert(Math.abs(angle - 0.24) < 0.0001, "非所有者指针不应改变视角");
+        look.dispatchEvent(pointer("pointerup", 3, 340, 20));
+
+        const orientation = await requestLandscapeMode({
+          mobile: true, fromGesture: true,
+          documentRef: { fullscreenElement: null, documentElement: { requestFullscreen: async () => {} } },
+          screenRef: { orientation: { lock: async () => {} } },
+          width: () => 844, height: () => 390,
+        });
+        assert(orientation.locked && orientation.dismissPrompt, "横屏流程未完成");
+        result.dataset.status = "passed";
+        result.textContent = "PointerEvent、触控视角、摇杆与横屏浏览器集成测试通过。";
+      } catch (error) {
+        result.dataset.status = "failed";
+        result.textContent = error.stack || String(error);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "blindspot-protocol",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check core.js && node --check game-state.js && node --check movement.js && node --check sonar.js && node --check replay.js && node --check storage.js && node --check mobile-controls.js && node --check raycast-worker.js && node --check music.js && node --check terminal-scroll.js && node --check game.js && node --test"
+  }
+}

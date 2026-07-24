@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>盲区协议 · BLINDSPOT PROTOCOL</title>
+    <link rel="icon" href="icon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="icon.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <main id="ui">
+      <section id="title" class="screen title-boot">
+        <div class="noise"></div>
+        <div class="orb o1"></div>
+        <div class="orb o2"></div>
+        <div class="eyebrow">
+          VISUAL MODULE FAILURE · NAVIGATION PROTOCOL 03
+        </div>
+        <h1>盲区<br /><i>协议</i></h1>
+        <p class="en-title">BLINDSPOT PROTOCOL</p>
+        <p class="intro">
+          视觉模块已经离线。你只能看见自己发出的声音，和声音撞见世界的瞬间。
+        </p>
+        <div class="actions">
+          <div class="actions-row">
+            <button class="primary" data-action="settings">
+              唤醒机体 <b>↗</b></button
+            ><button class="ghost" data-action="replays">回放与 PK</button
+            ><button class="ghost" data-action="how">游戏说明</button>
+          </div>
+          <div class="actions-row">
+            <button class="ghost" data-action="display">设置</button
+            ><button class="ghost" data-action="about">关于</button>
+          </div>
+        </div>
+        <button
+          id="mobile-controls-test"
+          class="mobile-test-toggle"
+          type="button"
+          aria-pressed="false"
+        >
+          ▣ 显示手机操作（测试）
+        </button>
+        <small>不要相信黑暗。相信回声。</small>
+      </section>
+
+      <section id="replays" class="screen hidden">
+        <button class="back" data-action="title">← 返回</button>
+        <div class="settings-card replay-card">
+          <em>LOCAL ENCRYPTED REPLAY ARCHIVE</em>
+          <h2>回放与竞速 PK</h2>
+          <p class="replay-intro">
+            最近 100
+            局会加密保存在本机。选择与当前显示模式一致的记录，即可生成竞速机器人；它不会发射可见声波或显影墙体。
+          </p>
+          <div class="replay-share-tools">
+            <label for="replay-import">导入加密回放字符串</label>
+            <textarea
+              id="replay-import"
+              rows="3"
+              spellcheck="false"
+              placeholder="粘贴 BSP1. 开头的回放字符串"
+            ></textarea>
+            <button id="replay-import-btn" class="ghost" type="button">
+              导入回放
+            </button>
+            <small id="replay-import-status" aria-live="polite"></small>
+          </div>
+          <div id="replay-list" class="replay-list" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="settings" class="screen hidden">
+        <button class="back" data-action="settings-back">← 返回</button>
+        <div class="settings-card">
+          <em>MAP GENERATION SETTINGS</em>
+          <h2>导航参数</h2>
+          <label class="setting-row"
+            ><span
+              ><b>地图种子</b
+              ><small>相同种子会生成完全相同的迷宫与能源位置。</small></span
+            >
+            <div class="seed-control">
+              <input
+                id="seed-input"
+                maxlength="32"
+                placeholder="输入种子或使用随机种子"
+              /><button id="random-seed-btn" class="ghost">随机</button>
+            </div></label
+          >
+          <div class="setting-row">
+            <span
+              ><b>显示模式</b
+              ><small>仅可在开始前选择；进入迷宫后将锁定当前模式。</small></span
+            >
+            <details id="view-mode" class="mode-select">
+              <summary><b id="view-mode-label">3D 第一人称</b><i>⌄</i></summary>
+              <button type="button" data-view="3d">3D 第一人称</button
+              ><button type="button" data-view="2d">2D 俯视</button>
+            </details>
+          </div>
+          <div class="seed-preview">
+            本局地图标识 <b id="seed-preview">—</b>
+          </div>
+          <button class="primary" data-action="start">
+            应用并进入迷宫 <b>↗</b>
+          </button>
+        </div>
+      </section>
+
+      <section id="display" class="screen hidden">
+        <button class="back" data-action="display-back">← 返回</button>
+        <div class="settings-card display-card">
+          <em>SYSTEM &amp; DISPLAY SETTINGS</em>
+          <h2>设置</h2>
+          <label id="sensitivity-row" class="setting-row"
+            ><span
+              ><b>视角灵敏度</b
+              ><small>同时应用于 3D 鼠标视角与手机端屏幕滑动视角。</small></span
+            >
+            <div class="range-control">
+              <input
+                id="sensitivity"
+                type="range"
+                min="20"
+                max="200"
+                value="100"
+              /><output id="sensitivity-value">100%</output>
+            </div></label
+          >
+          <label id="fov-row" class="setting-row"
+            ><span
+              ><b>3D 视野范围</b
+              ><small id="fov-description"
+                >仅在 3D 第一人称模式生效；数值越高，视野越宽。</small
+              ></span
+            >
+            <div class="range-control">
+              <input
+                id="fov"
+                type="range"
+                min="60"
+                max="110"
+                step="1"
+                value="67"
+                aria-describedby="fov-description"
+              /><output id="fov-value">67°</output>
+            </div></label
+          >
+          <label class="setting-row crt-row"
+            ><span
+              ><b>CRT 屏幕遮罩</b
+              ><small>调节重新设计的扫描、像素栅格与边缘暗角强度。</small></span
+            >
+            <div class="range-control">
+              <input
+                id="crt-strength"
+                type="range"
+                min="0"
+                max="100"
+                value="35"
+              /><output id="crt-value">35%</output>
+            </div></label
+          >
+          <label class="setting-row"
+            ><span
+              ><b>辉光强度</b
+              ><small>调节声波、墙体、能源与终端光源的整体发光感。</small></span
+            >
+            <div class="range-control">
+              <input
+                id="glow-strength"
+                type="range"
+                min="0"
+                max="100"
+                value="55"
+              /><output id="glow-value">55%</output>
+            </div></label
+          >
+          <label class="setting-row"
+            ><span
+              ><b>音乐音量</b
+              ><small>标题、迷宫与 PK 背景音乐的总音量。</small></span
+            >
+            <div class="range-control">
+              <input
+                id="music-volume"
+                type="range"
+                min="0"
+                max="100"
+                value="55"
+              /><output id="music-volume-value">55%</output>
+            </div></label
+          >
+          <label class="setting-row"
+            ><span
+              ><b>音效音量</b
+              ><small>声呐发射等即时音效的音量。</small></span
+            >
+            <div class="range-control">
+              <input
+                id="sfx-volume"
+                type="range"
+                min="0"
+                max="100"
+                value="70"
+              /><output id="sfx-volume-value">70%</output>
+            </div></label
+          >
+          <button class="primary" data-action="display-back">保存并返回</button>
+        </div>
+      </section>
+
+      <section id="help" class="screen hidden">
+        <button class="back" data-action="title">← 返回</button>
+        <div class="help-card">
+          <em>BLINDSPOT PROTOCOL · FIELD MANUAL</em>
+          <h2>游戏说明</h2>
+          <div class="manual-grid">
+            <section class="manual-block">
+              <h3>操作说明</h3>
+              <p>
+                <kbd>W</kbd><kbd>S</kbd> / <kbd>↑</kbd
+                ><kbd>↓</kbd> 前进与后退。2D 模式使用 <kbd>A</kbd><kbd>D</kbd> /
+                <kbd>←</kbd><kbd>→</kbd> 转向；3D 模式使用 <kbd>A</kbd
+                ><kbd>D</kbd> / <kbd>←</kbd
+                ><kbd>→</kbd> 横移，鼠标控制水平视角。
+              </p>
+              <p>
+                <kbd>Q</kbd> 发射红波，<kbd>E</kbd> 发射绿波，<kbd>R</kbd>
+                发射蓝波。<kbd>Esc</kbd> 暂停游戏。
+              </p>
+            </section>
+            <section class="manual-block">
+              <h3>游戏规则</h3>
+              <p>
+                视觉模块已经离线。利用声波探测墙体，穿过迷宫并抵达右下方的绿色能源补给站。
+              </p>
+              <p>
+                声呐波无法穿过墙体。红波不反弹；绿波最多反弹 3 次；蓝波进行 360°
+                环扫。补给站、能源晶体与道具持续辐射电磁信号，可穿墙被导航模块接收。移动时不消耗能源，但移动期间不会自然恢复能源；能源耗尽后仍可低速移动。
+              </p>
+              <p>
+                红波：2D 永久显影，3D 显影 9 秒。绿波：2D 显影 3 秒，3D 显影 7
+                秒。蓝波：2D 显影 7 秒，3D 显影 5 秒。
+              </p>
+            </section>
+            <section class="manual-block">
+              <h3>道具设定</h3>
+              <div class="item-entry">
+                <span class="item-icon beacon-icon" aria-hidden="true"
+                  ><i></i
+                ></span>
+                <p>
+                  <b class="item-name beacon-name">回声信标</b
+                  >：触碰后部署，始终显影更大范围内的迷宫墙壁。
+                </p>
+              </div>
+              <div class="item-entry">
+                <span class="item-icon capacitor-icon" aria-hidden="true"
+                  ><i></i
+                ></span>
+                <p>
+                  <b class="item-name capacitor-name">静默电容</b>：持续 8
+                  秒；移动时也能恢复能源，但期间不能发射声波。
+                </p>
+              </div>
+              <div class="item-entry">
+                <span class="item-icon resonator-icon" aria-hidden="true"
+                  ><i></i
+                ></span>
+                <p>
+                  <b class="item-name resonator-name">闪域谐振器</b>：2D
+                  下让所有墙壁连续闪烁 3 次；3D 下闪烁通往终点的路径 3 次。
+                </p>
+              </div>
+              <p>
+                所有道具均持续辐射电磁波，因此即使未被声呐扫描、或隔着墙体，也能被导航模块看见。绿色能源晶体同样可见并能恢复能源；道具和能源的位置由地图种子决定。
+              </p>
+            </section>
+            <section class="manual-block">
+              <h3>通关评级</h3>
+              <p>
+                <b>S</b>：50 秒以内　<b>A</b>：50～70 秒<br /><b>B</b>：70～100
+                秒　<b>C</b>：100～200 秒
+              </p>
+              <p>达到 200 秒仍未抵达补给站将自动失败，评级为 <b>D</b>。</p>
+            </section>
+          </div>
+          <button class="primary" data-action="settings">
+            前往地图设置 <b>↗</b>
+          </button>
+        </div>
+      </section>
+
+      <section id="about" class="screen hidden">
+        <button class="back" data-action="title">← 返回</button>
+        <div class="settings-card about-card">
+          <em>SYSTEM DOSSIER · BLINDSPOT PROTOCOL</em>
+          <h2>关于</h2>
+          <p class="about-lede">
+            一款用声波代替视觉的迷宫导航实验。视觉模块离线之后，你只能听见世界，再一点点把它画出来。
+          </p>
+          <div class="about-grid">
+            <section class="about-block">
+              <h3>作者</h3>
+              <p class="about-identity">
+                <b>The_Symbol</b>
+                <span class="about-aka">符号符号男</span>
+              </p>
+              <p>
+                独立开发者。负责玩法设计、程序实现、终端风 UI、声呐与回放系统。
+                若你在黑暗里听见回声——那大概就是他想让你听见的东西。
+              </p>
+            </section>
+            <section class="about-block">
+              <h3>版本</h3>
+              <p class="about-version">
+                <span class="about-version-tag">26w30a</span>
+                <small>SNAPSHOT · 2026 年第 30 周实验构建</small>
+              </p>
+              <p>
+                版本号采用「年份缩写 + 周次 + 阶段」标记（如
+                <code>26w30a</code>）。本构建包含自定义终端滚动条、本地加密回放 /
+                PK、标题 BGM 与工业风设置界面等近期改动。
+              </p>
+            </section>
+            <section class="about-block">
+              <h3>技术框架</h3>
+              <p>
+                纯前端、零构建管线：原生
+                <b>HTML / CSS / ES Modules</b>，主循环驱动
+                <b>Canvas 2D</b> 渲染；3D 视角使用
+                <b>Web Worker</b> 做射线投射以减轻主线程负担。
+              </p>
+              <p>
+                音频为 <b>HTMLAudioElement</b> 流式 BGM；回放经
+                <b>Web Crypto (AES-GCM)</b> 加密后写入
+                <b>localStorage</b>。触摸摇杆与横屏引导面向移动端浏览器。
+              </p>
+              <p>
+                单元与浏览器集成测试由 <b>Node.js</b>
+                内置测试运行器驱动，无外部 UI 框架、无打包器。
+              </p>
+            </section>
+            <section class="about-block">
+              <h3>协议与档案</h3>
+              <p>
+                核心循环：种子迷宫生成 → 声呐显影 → 能源管理 →
+                终点补给。本地最多保留 100
+                条加密回放，可导出分享串或生成竞速幽灵。
+              </p>
+              <p>
+                显示模式（2D / 3D）在开局锁定；手机端支持虚拟摇杆与滑动视角。设置中的
+                CRT、辉光、灵敏度与音量会保存在本机。
+              </p>
+              <p class="about-footer-note">
+                不要相信黑暗。相信回声。<br />
+                <span>BLINDSPOT PROTOCOL · NAVIGATION MODULE 03</span>
+              </p>
+            </section>
+          </div>
+          <button class="primary" data-action="title">返回主菜单</button>
+        </div>
+      </section>
+
+      <section id="hud" class="hidden">
+        <div id="game-timer" class="game-timer">00:00.0</div>
+        <div
+          id="replay-controls"
+          class="replay-controls hidden"
+          aria-label="回放控制"
+        >
+          <div class="replay-controls-left">
+            <button type="button" data-replay-seek="-10">−10s</button>
+            <button type="button" data-replay-seek="-5">−5s</button>
+          </div>
+          <button id="replay-play" type="button">Ⅱ 暂停</button>
+          <div class="replay-controls-right">
+            <button type="button" data-replay-seek="5">+5s</button>
+            <button type="button" data-replay-seek="10">+10s</button>
+            <details class="replay-speed-menu">
+              <summary id="replay-speed">1×</summary>
+              <div class="replay-speed-options">
+                <button type="button" data-replay-speed="0.5">0.5×</button>
+                <button type="button" data-replay-speed="1">1×</button>
+                <button type="button" data-replay-speed="2">2×</button>
+                <button type="button" data-replay-speed="4">4×</button>
+              </div>
+            </details>
+          </div>
+        </div>
+        <header class="topbar">
+          <div class="brand">
+            <em>BLINDSPOT PROTOCOL</em
+            ><strong id="sector-label">SEED · —</strong>
+          </div>
+          <div class="energy">
+            <span>能源余量</span>
+            <div class="bar"><i id="energy-fill"></i></div>
+            <b id="energy-text">100%</b>
+          </div>
+          <div class="status"><span>视觉模块</span><b>OFFLINE</b></div>
+        </header>
+        <div id="objective" class="objective">
+          寻找能源补给站。不要撞上黑暗中的墙。
+        </div>
+        <aside class="sonar-console" aria-label="声呐冷却状态">
+          <div class="console-heading">
+            <span>SONAR CHANNELS</span>
+            <b>LINK // 03</b>
+          </div>
+          <div class="sonar-channel" data-sonar-channel="red">
+            <span class="channel-mark red"></span>
+            <span class="channel-name">RED / 直波</span>
+            <b class="channel-state" id="red-cooldown">READY</b>
+            <i class="channel-bar"><em></em></i>
+          </div>
+          <div class="sonar-channel" data-sonar-channel="green">
+            <span class="channel-mark green"></span>
+            <span class="channel-name">GREEN / 反射</span>
+            <b class="channel-state" id="green-cooldown">READY</b>
+            <i class="channel-bar"><em></em></i>
+          </div>
+          <div class="sonar-channel" data-sonar-channel="blue">
+            <span class="channel-mark blue"></span>
+            <span class="channel-name">BLUE / 环扫</span>
+            <b class="channel-state" id="blue-cooldown">READY</b>
+            <i class="channel-bar"><em></em></i>
+          </div>
+          <div class="console-foot">COOLDOWN MONITOR · ONLINE</div>
+        </aside>
+        <div class="side">
+          <button id="restart-btn">↺ 重置</button
+          ><button id="pause-btn">Ⅱ 暂停</button>
+        </div>
+        <div class="bottom">
+          <span class="legend red"></span
+          ><span id="red-legend">直波 · 9s</span>
+          <span class="legend green"></span
+          ><span id="green-legend">反射 · 7s</span>
+          <span class="legend blue"></span
+          ><span id="blue-legend">环扫 · 5s</span>
+          <b id="control-guide">模式锁定中</b>
+        </div>
+      </section>
+
+      <div id="mobile-controls" aria-label="手机游戏控制">
+        <div class="mobile-move">
+          <button
+            class="mobile-key up"
+            data-mobile-input="forward"
+            aria-label="前进"
+          >
+            ▲
+          </button>
+          <button
+            class="mobile-key left"
+            data-mobile-input="left"
+            aria-label="向左或左转"
+          >
+            ◀
+          </button>
+          <button
+            class="mobile-key right"
+            data-mobile-input="right"
+            aria-label="向右或右转"
+          >
+            ▶
+          </button>
+          <button
+            class="mobile-key down"
+            data-mobile-input="back"
+            aria-label="后退"
+          >
+            ▼
+          </button>
+        </div>
+        <div class="mobile-joystick" aria-label="移动摇杆">
+          <div class="joystick-base"><div class="joystick-knob"></div></div>
+        </div>
+        <div class="mobile-actions">
+          <div class="mobile-waves" aria-label="声呐发射">
+            <button
+              class="wave-red"
+              data-mobile-wave="red"
+              aria-label="红色直波"
+            >
+              <b>Q</b><small>直波</small></button
+            ><button
+              class="wave-green"
+              data-mobile-wave="green"
+              aria-label="绿色反射波"
+            >
+              <b>E</b><small>反射</small></button
+            ><button
+              class="wave-blue"
+              data-mobile-wave="blue"
+              aria-label="蓝色环扫波"
+            >
+              <b>R</b><small>环扫</small>
+            </button>
+          </div>
+          <button
+            class="mobile-pause"
+            type="button"
+            data-action="pause"
+            aria-label="暂停游戏"
+          >
+            Ⅱ
+          </button>
+        </div>
+      </div>
+
+      <section id="landscape-prompt" class="overlay hidden">
+        <div class="modal landscape-modal">
+          <em>MOBILE DISPLAY ORIENTATION</em>
+          <h2>请横屏运行</h2>
+          <p>游戏在横屏模式下运行。点击下方按钮自动启用横屏模式。</p>
+          <button id="enable-landscape-btn" class="primary">
+            启用横屏模式 <b>↗</b>
+          </button>
+        </div>
+      </section>
+      <section id="pause" class="overlay hidden">
+        <div class="modal">
+          <em>NAVIGATION PAUSED</em>
+          <h2>声场冻结</h2>
+          <p>黑暗不会移动，但你必须继续聆听。</p>
+          <button class="primary" data-action="resume">继续导航</button
+          ><button class="ghost" data-action="display">设置</button
+          ><button class="ghost" data-action="settings">生成新迷宫</button
+          ><button class="ghost" data-action="title">返回标题</button>
+        </div>
+      </section>
+      <section id="result" class="overlay hidden">
+        <div class="modal">
+          <div class="crest">◈</div>
+          <em id="result-signal">ENERGY LINK ESTABLISHED</em>
+          <h2 id="result-heading">补给完成</h2>
+          <p id="result-text"></p>
+          <div id="result-rank">S</div>
+          <div class="result-actions">
+            <button class="primary" data-action="restart">重置本局</button
+            ><button class="ghost" data-action="title">主菜单</button>
+          </div>
+        </div>
+      </section>
+      <section id="delete-confirm" class="overlay hidden" aria-modal="true" role="dialog" aria-labelledby="delete-confirm-heading">
+        <div class="modal delete-modal">
+          <div class="crest delete-crest">!</div>
+          <em>IRREVERSIBLE ARCHIVE PURGE</em>
+          <h2 id="delete-confirm-heading">确认删除回放？</h2>
+          <p>这条本地加密回放将被永久删除，且无法找回。</p>
+          <div class="result-actions">
+            <button id="delete-confirm-cancel" class="ghost" type="button">取消</button>
+            <button id="delete-confirm-accept" class="danger" type="button">永久删除</button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="crt-overlay" aria-hidden="true">
+      <i class="crt-ghost"></i><i class="crt-rgb-mask"></i
+      ><i class="crt-noise"></i><i class="crt-roll"></i>
+    </div>
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
