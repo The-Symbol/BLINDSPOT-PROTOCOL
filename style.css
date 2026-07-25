@@ -2391,10 +2391,10 @@ kbd {
   font-size: 9px;
 }
 .mobile-browser .term-scroll:has(> .settings-card) {
-  width: min(92vw, 340px);
+  width: min(92vw, 420px);
 }
 .mobile-browser .term-scroll:has(> .settings-card.about-card) {
-  width: min(92vw, 360px);
+  width: min(92vw, 440px);
 }
 .mobile-browser .term-scroll > .settings-card {
   max-height: calc(100vh - 100px);
@@ -2423,7 +2423,7 @@ kbd {
   font-size: 10px;
 }
 .mobile-browser .about-card {
-  width: min(92vw, 360px);
+  width: min(92vw, 420px);
 }
 .mobile-browser .about-card h2 {
   font-size: 14px;
@@ -2460,7 +2460,7 @@ kbd {
   border-radius: 2px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 280px);
+  width: min(92vw, 380px);
 }
 .mobile-browser .replay-card h2 {
   font-size: 13px;
@@ -3462,20 +3462,6 @@ kbd {
   color: #8b9a9b;
   text-shadow: 0 0 calc(16px * var(--glow)) #8b9a9b66;
 }
-.mobile-browser[data-view-mode="2d"] .mobile-move .left,
-.mobile-browser[data-view-mode="2d"] .mobile-move .right {
-  display: block;
-  position: fixed;
-  top: auto;
-  bottom: max(172px, calc(env(safe-area-inset-bottom) + 154px));
-  left: auto;
-}
-.mobile-browser[data-view-mode="2d"] .mobile-move .left {
-  right: max(76px, calc(env(safe-area-inset-right) + 58px));
-}
-.mobile-browser[data-view-mode="2d"] .mobile-move .right {
-  right: max(18px, env(safe-area-inset-right));
-}
 @media (max-height: 500px) {
   .mobile-browser .topbar {
     top: 49px;
@@ -3494,9 +3480,5 @@ kbd {
   .mobile-browser .mobile-joystick {
     transform: scale(0.9);
     transform-origin: left bottom;
-  }
-  .mobile-browser[data-view-mode="2d"] .mobile-move .left,
-  .mobile-browser[data-view-mode="2d"] .mobile-move .right {
-    transform: none;
   }
 }
