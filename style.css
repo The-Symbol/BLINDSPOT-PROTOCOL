@@ -342,7 +342,7 @@ body.ui-transitioning .screen summary {
 }
 .screen.screen-fade-in {
   opacity: 0;
-  transition: opacity 0.32s cubic-bezier(0, 0, 0.2, 1);
+  transition: opacity 0.16s cubic-bezier(0, 0, 0.2, 1);
   z-index: 5;
 }
 .screen.screen-fade-in-active {
@@ -2084,8 +2084,8 @@ kbd {
 }
 .mobile-move {
   left: max(14px, env(safe-area-inset-left));
-  width: 142px;
-  height: 142px;
+  width: 156px;
+  height: 156px;
 }
 .mobile-move button,
 .mobile-actions button {
@@ -2101,10 +2101,10 @@ kbd {
 }
 .mobile-key {
   position: absolute;
-  width: 49px;
-  height: 49px;
+  width: 54px;
+  height: 54px;
   border-radius: 12px;
-  font-size: 18px;
+  font-size: 20px;
 }
 .mobile-key.up {
   left: 46px;
@@ -2261,8 +2261,8 @@ kbd {
   left: max(14px, env(safe-area-inset-left));
   bottom: max(18px, env(safe-area-inset-bottom));
   display: block;
-  width: 142px;
-  height: 142px;
+  width: 156px;
+  height: 156px;
   pointer-events: auto;
   touch-action: none;
 }
@@ -2328,140 +2328,140 @@ kbd {
 
 /* Mobile scaling: shrink menu, buttons, cards, and modals for small screens. */
 .mobile-browser .screen h1 {
-  font-size: clamp(36px, 7.5vw, 72px);
-  letter-spacing: -3px;
+  font-size: clamp(30px, 6.5vw, 60px);
+  letter-spacing: -2px;
 }
 .mobile-browser .en-title {
-  font-size: 9px;
-  letter-spacing: 4px;
+  font-size: 8px;
+  letter-spacing: 3px;
 }
 .mobile-browser .intro {
-  font-size: 11px;
-  margin: 14px 10px 12px;
-  max-width: 300px;
-  line-height: 1.65;
+  font-size: 10px;
+  margin: 10px 8px 10px;
+  max-width: 280px;
+  line-height: 1.6;
 }
 .mobile-browser .eyebrow {
-  font-size: 7px;
-  letter-spacing: 1.2px;
+  font-size: 6px;
+  letter-spacing: 1px;
 }
 .mobile-browser .actions {
-  gap: 6px;
-  max-width: min(340px, 92vw);
+  gap: 5px;
+  max-width: min(300px, 92vw);
 }
 .mobile-browser .actions-row {
-  gap: 5px;
+  gap: 4px;
 }
 .mobile-browser .primary,
 .mobile-browser .ghost,
 .mobile-browser .back {
-  padding: 6px 10px;
-  font-size: 10px;
-  letter-spacing: 0.3px;
+  padding: 5px 8px;
+  font-size: 9px;
+  letter-spacing: 0.2px;
 }
 .mobile-browser .primary b {
-  font-size: 12px;
-  margin-left: 5px;
+  font-size: 11px;
+  margin-left: 4px;
 }
 .mobile-browser .settings-card,
 .mobile-browser .help-card {
-  padding: 12px;
+  padding: 10px;
   width: 100%;
 }
 .mobile-browser .term-scroll:has(> .settings-card) {
-  width: min(92vw, 400px);
+  width: min(92vw, 340px);
 }
 .mobile-browser .term-scroll:has(> .settings-card.about-card) {
-  width: min(92vw, 420px);
+  width: min(92vw, 360px);
 }
 .mobile-browser .term-scroll > .settings-card {
   max-height: calc(100vh - 100px);
 }
 .mobile-browser .settings-card h2,
 .mobile-browser .help-card h2 {
-  font-size: 16px;
-  margin: 2px 0 10px;
+  font-size: 14px;
+  margin: 2px 0 8px;
 }
 .mobile-browser .settings-card em,
 .mobile-browser .help-card em {
   font-size: 7px;
 }
 .mobile-browser .setting-row b {
-  font-size: 11px;
+  font-size: 10px;
 }
 .mobile-browser .setting-row small {
-  font-size: 9px;
+  font-size: 8px;
 }
 .mobile-browser .settings-card input[type="range"] {
-  height: 24px;
+  height: 22px;
 }
 .mobile-browser .settings-card input:not([type="range"]),
 .mobile-browser .settings-card select {
-  height: 30px;
-  font-size: 11px;
+  height: 26px;
+  font-size: 10px;
 }
 .mobile-browser .about-card {
-  width: min(92vw, 400px);
+  width: min(92vw, 360px);
 }
 .mobile-browser .about-card h2 {
-  font-size: 16px;
-  margin: 2px 0 10px;
+  font-size: 14px;
+  margin: 2px 0 8px;
 }
 .mobile-browser .about-grid {
   grid-template-columns: 1fr;
 }
 .mobile-browser .about-block {
   min-height: auto;
-  padding: 10px;
+  padding: 8px;
 }
 .mobile-browser .about-block h3 {
-  font-size: 10px;
+  font-size: 9px;
 }
 .mobile-browser .about-block p {
-  font-size: 10px;
+  font-size: 9px;
 }
 .mobile-browser .modal {
-  padding: 16px;
-  width: min(84vw, 280px);
+  padding: 12px;
+  width: min(82vw, 250px);
 }
 .mobile-browser .modal h2 {
-  font-size: 20px;
+  font-size: 17px;
 }
 .mobile-browser .modal p {
-  font-size: 10px;
-  margin: 0 0 10px;
+  font-size: 9px;
+  margin: 0 0 8px;
 }
 .mobile-browser .modal button {
-  width: 150px;
-  padding: 6px 10px;
-  font-size: 10px;
+  width: 140px;
+  padding: 5px 8px;
+  font-size: 9px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 400px);
+  width: min(92vw, 360px);
 }
 .mobile-browser .replay-card h2 {
-  font-size: 16px;
+  font-size: 14px;
 }
 .mobile-browser .replay-intro {
-  font-size: 10px;
+  font-size: 9px;
 }
 .mobile-browser #title small {
-  font-size: 8px;
+  font-size: 7px;
 }
 .mobile-browser .mobile-test-toggle {
-  font-size: 8px;
-  padding: 4px 6px;
+  font-size: 7px;
+  padding: 3px 5px;
 }
 .mobile-browser .seed-preview {
-  font-size: 10px;
+  font-size: 9px;
 }
 .mobile-browser .mode-select summary {
-  font-size: 11px;
-  padding: 6px 10px;
+  font-size: 10px;
+  padding: 5px 8px;
 }
 .mobile-browser .mode-select button {
-  font-size: 11px;
-  padding: 6px 10px;
+  font-size: 10px;
+  padding: 5px 8px;
 }
 
 /* ═══ Launch mask: fullscreen industrial terminal overlay ═══ */
@@ -3316,15 +3316,15 @@ kbd {
 .mobile-browser[data-view-mode="3d"] .mobile-joystick {
   left: max(18px, env(safe-area-inset-left));
   bottom: max(18px, env(safe-area-inset-bottom));
-  width: 132px;
-  height: 132px;
+  width: 156px;
+  height: 156px;
 }
 .mobile-browser .joystick-base {
   inset: 3px;
 }
 .mobile-browser .joystick-knob {
-  width: 54px;
-  height: 54px;
+  width: 62px;
+  height: 62px;
 }
 .mobile-browser .mobile-move {
   left: max(18px, env(safe-area-inset-left));
@@ -3338,16 +3338,16 @@ kbd {
   border-radius: 14px;
 }
 .mobile-browser .mobile-key.up {
-  left: 43px;
+  left: 51px;
 }
 .mobile-browser .mobile-key.left {
-  top: 43px;
+  top: 51px;
 }
 .mobile-browser .mobile-key.right {
-  top: 43px;
+  top: 51px;
 }
 .mobile-browser .mobile-key.down {
-  left: 43px;
+  left: 51px;
 }
 .mobile-browser .sonar-console {
   top: 50px;
@@ -3396,7 +3396,7 @@ kbd {
   display: block;
   position: fixed;
   top: auto;
-  bottom: max(176px, calc(env(safe-area-inset-bottom) + 158px));
+  bottom: max(120px, calc(env(safe-area-inset-bottom) + 102px));
   left: auto;
 }
 .mobile-browser[data-view-mode="2d"] .mobile-move .left {

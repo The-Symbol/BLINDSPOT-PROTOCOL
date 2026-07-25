@@ -1722,7 +1722,7 @@ function drawRobot2D(
   ctx.shadowColor = accentColor;
   ctx.shadowBlur = glow(13);
   ctx.beginPath();
-  ctx.roundRect(-r, -r, r * 2, r * 2, 5);
+  ctx.roundRect(-r, -r, r * 2, r * 2, 2);
   ctx.fill();
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#050d11";
