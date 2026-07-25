@@ -1677,7 +1677,7 @@ kbd {
 }
 .status {
   position: absolute;
-  top: -53px;
+  top: -38px;
   right: 0;
   text-align: right;
 }
@@ -2020,7 +2020,7 @@ kbd {
 .mobile-fullscreen {
   position: absolute;
   top: max(10px, env(safe-area-inset-top));
-  left: max(10px, env(safe-area-inset-left));
+  left: 120px;
   z-index: 9;
   width: 42px;
   height: 42px;
@@ -2155,7 +2155,7 @@ kbd {
   left: 10px;
 }
 .mobile-browser .topbar {
-  top: 48px;
+  top: 55px;
   left: 10px;
   right: 10px;
 }
@@ -3239,7 +3239,7 @@ kbd {
 }
 @media (max-height: 500px) {
   .mobile-browser .topbar {
-    top: 42px;
+    top: 49px;
   }
   .mobile-browser .brand strong {
     font-size: 14px;

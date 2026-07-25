@@ -2280,7 +2280,7 @@ document.querySelectorAll("[data-mobile-wave]").forEach((button) =>
   const btn = document.getElementById("mobile-fullscreen-btn");
   if (!btn) return;
   function updateFsLabel() {
-    btn.textContent = document.fullscreenElement ? "⛶" : "⛶";
+    btn.textContent = document.fullscreenElement ? "⊡" : "⛶";
     btn.setAttribute(
       "aria-label",
       document.fullscreenElement ? "退出全屏" : "进入全屏",
