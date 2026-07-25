@@ -4,8 +4,12 @@ import {
   clampReplayTime,
   createReplayRecorder,
   exportReplayShare,
+  exportReplayShareLink,
   finishReplayRecord,
   importReplayShare,
+  importReplayShareInput,
+  parseReplayImportInput,
+  pasteUrlForKey,
   recordReplaySample,
   recordReplaySonar,
   replayEventCursor,
@@ -13,6 +17,7 @@ import {
   sampleReplay,
   saveReplay,
   loadReplays,
+  uploadReplayShare,
   validateReplayRoute,
 } from "./replay.js";
 
@@ -61,6 +66,95 @@ test("encrypted share strings round-trip and reject tampering", async () => {
   const imported = await importReplayShare(share);
   assert.deepEqual(imported, replay);
   await assert.rejects(() => importReplayShare(`${share}x`));
+});
+
+test("parseReplayImportInput accepts BSP1 codes, paste URLs, and bare keys", () => {
+  assert.deepEqual(parseReplayImportInput("BSP1.abc"), {
+    kind: "share",
+    share: "BSP1.abc",
+  });
+  assert.deepEqual(parseReplayImportInput("https://pastes.dev/AbCd12"), {
+    kind: "paste",
+    key: "AbCd12",
+  });
+  assert.deepEqual(parseReplayImportInput("https://api.pastes.dev/AbCd12"), {
+    kind: "paste",
+    key: "AbCd12",
+  });
+  assert.deepEqual(parseReplayImportInput("https://paste.lucko.me/raw/AbCd12"), {
+    kind: "paste",
+    key: "AbCd12",
+  });
+  assert.deepEqual(parseReplayImportInput("AbCd12"), {
+    kind: "paste",
+    key: "AbCd12",
+  });
+  assert.equal(pasteUrlForKey("AbCd12"), "https://pastes.dev/AbCd12");
+  assert.equal(
+    pasteUrlForKey("AbCd12", true),
+    "https://api.pastes.dev/AbCd12",
+  );
+  assert.throws(() => parseReplayImportInput("https://example.com/x"), /paste/);
+  assert.throws(() => parseReplayImportInput(""), /Empty/);
+});
+
+test("upload and import via mocked pastes.dev API", async () => {
+  const replay = createReplayRecorder("PASTE", "2d", 5);
+  recordReplaySample(replay, 0, { x: 0.5, y: 0.5, angle: 0 }, 100);
+  recordReplaySample(replay, 1, { x: 0.5, y: 0.5, angle: 0 }, 90);
+  finishReplayRecord(replay, 1, false, "D");
+
+  const share = await exportReplayShare(replay);
+  const store = new Map();
+
+  const fetchImpl = async (url, options = {}) => {
+    const href = String(url);
+    if (href.endsWith("/post") && options.method === "POST") {
+      const key = "mockKey9";
+      store.set(key, String(options.body));
+      return {
+        ok: true,
+        status: 201,
+        headers: { get: (name) => (String(name).toLowerCase() === "location" ? key : null) },
+        json: async () => ({ key }),
+        text: async () => JSON.stringify({ key }),
+      };
+    }
+    // Official read: GET https://api.pastes.dev/{key}
+    const api = href.match(/api\.pastes\.dev\/([A-Za-z0-9]+)$/);
+    if (api && (!options.method || options.method === "GET")) {
+      const body = store.get(api[1]);
+      if (body == null) {
+        return { ok: false, status: 404, text: async () => "not found" };
+      }
+      return { ok: true, status: 200, text: async () => body };
+    }
+    return { ok: false, status: 404, text: async () => "" };
+  };
+
+  const url = await uploadReplayShare(share, fetchImpl);
+  assert.equal(url, "https://pastes.dev/mockKey9");
+
+  const linked = await exportReplayShareLink(replay, fetchImpl);
+  assert.equal(linked.url, "https://pastes.dev/mockKey9");
+  assert.match(linked.share, /^BSP1\./);
+
+  const fromUrl = await importReplayShareInput(url, fetchImpl);
+  assert.deepEqual(fromUrl, replay);
+  const fromApi = await importReplayShareInput(
+    "https://api.pastes.dev/mockKey9",
+    fetchImpl,
+  );
+  assert.deepEqual(fromApi, replay);
+  const fromKey = await importReplayShareInput("mockKey9", fetchImpl);
+  assert.deepEqual(fromKey, replay);
+  const fromShare = await importReplayShareInput(share, fetchImpl);
+  assert.deepEqual(fromShare, replay);
+
+  await assert.rejects(() => uploadReplayShare("not-a-share", fetchImpl));
+  await assert.rejects(() =>
+    importReplayShareInput("https://pastes.dev/missing", fetchImpl),
+  );
 });
 
 test("replay route validation rejects impossible speed, wall crossing, and fake completion", () => {

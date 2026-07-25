@@ -316,6 +316,137 @@ export async function importReplayShare(shareCode) {
   return decryptReplay(base64UrlDecode(value.slice(SHARE_PREFIX.length)));
 }
 
+/**
+ * Official lucko/paste instance (pastes.dev).
+ * @see https://github.com/lucko/paste/blob/master/API.md
+ *
+ * Upload: POST https://api.pastes.dev/post  → { key } / Location
+ * Read:   GET  https://api.pastes.dev/{key}
+ * View:   https://pastes.dev/{key}
+ */
+export const PASTE_API_BASE = "https://api.pastes.dev";
+export const PASTE_VIEW_HOST = "https://pastes.dev";
+/** @deprecated Use PASTE_VIEW_HOST; kept for older call sites. */
+export const PASTE_HOST = PASTE_VIEW_HOST;
+const PASTE_KEY_RE = /^[A-Za-z0-9]+$/;
+const PASTE_HOSTS = new Set([
+  "pastes.dev",
+  "api.pastes.dev",
+  "paste.lucko.me",
+  "www.pastes.dev",
+]);
+
+/**
+ * Upload an encrypted BSP1 share string and return a viewer URL.
+ * Content-Type text/plain per API; browser User-Agent is sent automatically.
+ */
+export async function uploadReplayShare(shareCode, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== "function") throw new Error("Network upload is unavailable");
+  const body = String(shareCode).trim();
+  if (!body.startsWith(SHARE_PREFIX)) throw new Error("Unsupported share code");
+  const response = await fetchImpl(`${PASTE_API_BASE}/post`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body,
+  });
+  if (!response.ok) throw new Error(`Paste upload failed (${response.status})`);
+  let key = "";
+  // Prefer JSON body; fall back to Location header (API returns both).
+  try {
+    const payload = await response.json();
+    if (typeof payload?.key === "string") key = payload.key.trim();
+  } catch (_) {
+    key = "";
+  }
+  if (!key) {
+    const location = response.headers?.get?.("Location") || response.headers?.get?.("location") || "";
+    key = String(location).replace(/^.*\//, "").trim();
+  }
+  if (!PASTE_KEY_RE.test(key)) throw new Error("Paste upload returned no key");
+  return pasteUrlForKey(key);
+}
+
+/** Build a public viewer URL (or API raw URL) from a paste key. */
+export function pasteUrlForKey(key, raw = false) {
+  const id = String(key || "").trim();
+  if (!PASTE_KEY_RE.test(id)) throw new Error("Invalid paste key");
+  return raw ? `${PASTE_API_BASE}/${id}` : `${PASTE_VIEW_HOST}/${id}`;
+}
+
+/**
+ * Parse import input: BSP1 share code, pastes.dev / paste.lucko.me URL, or bare key.
+ * Returns { kind: "share", share } or { kind: "paste", key }.
+ */
+export function parseReplayImportInput(input) {
+  const value = String(input ?? "").trim();
+  if (!value) throw new Error("Empty import input");
+  if (value.startsWith(SHARE_PREFIX)) return { kind: "share", share: value };
+
+  // Allow accidental wrapping quotes or surrounding whitespace/newlines.
+  const unquoted = value.replace(/^['"]|['"]$/g, "").trim();
+  if (unquoted.startsWith(SHARE_PREFIX)) return { kind: "share", share: unquoted };
+
+  try {
+    const url = new URL(unquoted);
+    if (!PASTE_HOSTS.has(url.hostname.toLowerCase())) {
+      throw new Error("Only pastes.dev links are supported");
+    }
+    const path = url.pathname.replace(/\/+$/, "") || "/";
+    // Legacy haste raw path + current api path are both /{key} or /raw/{key}.
+    const rawMatch = path.match(/^\/raw\/([A-Za-z0-9]+)$/i);
+    if (rawMatch) return { kind: "paste", key: rawMatch[1] };
+    const keyMatch = path.match(/^\/([A-Za-z0-9]+)$/i);
+    if (keyMatch) return { kind: "paste", key: keyMatch[1] };
+    throw new Error("Unrecognized paste URL");
+  } catch (error) {
+    if (error instanceof TypeError) {
+      // Not a URL — bare key (pastes.dev keys are alphanumeric).
+      if (PASTE_KEY_RE.test(unquoted) && unquoted.length >= 4 && unquoted.length <= 32) {
+        return { kind: "paste", key: unquoted };
+      }
+      throw new Error("Unsupported share code or paste link");
+    }
+    throw error;
+  }
+}
+
+/** Fetch paste body for a key via GET https://api.pastes.dev/{key}. */
+export async function fetchPasteRaw(key, fetchImpl = globalThis.fetch) {
+  if (typeof fetchImpl !== "function") throw new Error("Network fetch is unavailable");
+  const id = String(key || "").trim();
+  if (!PASTE_KEY_RE.test(id)) throw new Error("Invalid paste key");
+  const response = await fetchImpl(`${PASTE_API_BASE}/${id}`, {
+    method: "GET",
+    headers: { Accept: "text/plain" },
+  });
+  if (!response.ok) throw new Error(`Paste download failed (${response.status})`);
+  const text = (await response.text()).trim();
+  if (!text) throw new Error("Paste is empty");
+  return text;
+}
+
+/**
+ * Encrypt a replay and upload it; returns { share, url }.
+ * On upload failure the caller can still use `share`.
+ */
+export async function exportReplayShareLink(replay, fetchImpl = globalThis.fetch) {
+  const share = await exportReplayShare(replay);
+  const url = await uploadReplayShare(share, fetchImpl);
+  return { share, url };
+}
+
+/**
+ * Import from a BSP1 string, pastes.dev link, or paste key.
+ * Remote pastes are fetched via GET api.pastes.dev/{key} then decrypted.
+ */
+export async function importReplayShareInput(input, fetchImpl = globalThis.fetch) {
+  const parsed = parseReplayImportInput(input);
+  if (parsed.kind === "share") return importReplayShare(parsed.share);
+  const body = await fetchPasteRaw(parsed.key, fetchImpl);
+  // Pastes may wrap the share code with whitespace or a trailing newline only.
+  return importReplayShare(body.trim());
+}
+
 function safeStorage(storage) {
   return storage && typeof storage.getItem === "function" ? createSafeStorage(storage) : createSafeStorage();
 }

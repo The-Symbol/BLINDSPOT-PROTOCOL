@@ -30,7 +30,8 @@ import {
   createReplayRecorder,
   deleteReplay,
   exportReplayShare,
-  importReplayShare,
+  exportReplayShareLink,
+  importReplayShareInput,
   finishReplayRecord,
   loadReplays,
   replayEventCursor,
@@ -1933,26 +1934,63 @@ document.querySelectorAll("[data-replay-speed]").forEach((button) =>
 async function exportReplay(id) {
   const replay = (await loadReplays()).find((entry) => entry.id === id);
   if (!replay) throw new Error("Replay not found");
-  const shareCode = await exportReplayShare(replay);
-  ui.replayImport.value = shareCode;
+  ui.replayImportStatus.textContent = "正在上传加密回放到 pastes.dev…";
   try {
-    await navigator.clipboard?.writeText(shareCode);
-    ui.replayImportStatus.textContent = "已导出并复制加密回放字符串。";
-  } catch (_) {
-    ui.replayImportStatus.textContent = "已生成加密回放字符串，请手动复制。";
+    const { url } = await exportReplayShareLink(replay);
+    ui.replayImport.value = url;
+    try {
+      await navigator.clipboard?.writeText(url);
+      ui.replayImportStatus.textContent = `已上传并复制分享链接：${url}`;
+    } catch (_) {
+      ui.replayImportStatus.textContent = `已上传分享链接，请手动复制：${url}`;
+    }
+  } catch (error) {
+    // Network / CORS / paste downtime: fall back to the local BSP1 string.
+    try {
+      const shareCode = await exportReplayShare(replay);
+      ui.replayImport.value = shareCode;
+      try {
+        await navigator.clipboard?.writeText(shareCode);
+        ui.replayImportStatus.textContent =
+          "粘贴服务不可用，已导出并复制加密回放字符串（本地回退）。";
+      } catch (_) {
+        ui.replayImportStatus.textContent =
+          "粘贴服务不可用，已生成加密回放字符串，请手动复制。";
+      }
+    } catch (_) {
+      ui.replayImportStatus.textContent =
+        error?.message?.includes("upload") || error?.message?.includes("Network")
+          ? "导出失败：无法上传到 pastes.dev，且本地加密也失败。"
+          : "无法导出该回放。";
+      throw error;
+    }
   }
 }
 async function importReplay() {
-  ui.replayImportStatus.textContent = "正在验证加密回放…";
+  const input = ui.replayImport.value;
+  const looksLikeLink =
+    /pastes\.dev|paste\.lucko\.me/i.test(input) ||
+    (/^[A-Za-z0-9]{4,32}$/.test(String(input).trim()) &&
+      !String(input).trim().startsWith("BSP1."));
+  ui.replayImportStatus.textContent = looksLikeLink
+    ? "正在从 pastes.dev 拉取加密回放…"
+    : "正在验证加密回放…";
   try {
-    const replay = await importReplayShare(ui.replayImport.value);
+    const replay = await importReplayShareInput(input);
     await saveReplay(replay);
     ui.replayImport.value = "";
-    ui.replayImportStatus.textContent = "导入成功：可在下方观看或与该玩家 PK。";
-    renderReplayList(await loadReplays());
-  } catch (_) {
     ui.replayImportStatus.textContent =
-      "导入失败：字符串已损坏、被篡改或版本不兼容。";
+      "导入成功：可在下方观看或与该玩家 PK。";
+    renderReplayList(await loadReplays());
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (/paste|download|upload|Network|fetch|Only paste/i.test(message)) {
+      ui.replayImportStatus.textContent =
+        "导入失败：无法从链接获取内容，或链接不是 pastes.dev。";
+    } else {
+      ui.replayImportStatus.textContent =
+        "导入失败：字符串已损坏、被篡改、版本不兼容，或链接内容无效。";
+    }
   }
 }
 ui.replayImportButton.addEventListener("click", importReplay);
@@ -2087,6 +2125,12 @@ function setGlow(value) {
   root.setProperty("--glow-10", `${10 * scale * boost}px`);
   root.setProperty("--glow-12", `${12 * scale * boost}px`);
   root.setProperty("--glow-14", `${14 * scale * boost}px`);
+  // UI text glow (menus / HUD labels) tracks the same slider as canvas glow.
+  root.setProperty("--text-glow", `${(scale * boost * 7).toFixed(2)}px`);
+  root.setProperty(
+    "--text-glow-color",
+    `rgba(93, 221, 241, ${(scale * 0.32).toFixed(3)})`,
+  );
   ui.glowValue.textContent = `${n}%`;
   storage.setItem("blindspot-glow", n);
 }
@@ -2130,7 +2174,8 @@ ui.sfxVolume.oninput = () => setSfxVolume(ui.sfxVolume.value);
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
 // Industrial scroll rails (desktop + mobile) — native overlay bars ignore CSS.
+// Replay/PK card itself must not get an outer rail; only the inner list scrolls.
 const terminalScrolls = attachTerminalScrollAll(
-  ".replay-list, .settings-card",
+  ".replay-list, .settings-card:not(.replay-card)",
 );
 // Desired track is title by default; actual playback starts on first user gesture.

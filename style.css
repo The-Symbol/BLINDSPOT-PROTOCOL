@@ -38,6 +38,8 @@
   --glow-10: 5.5px;
   --glow-12: 6.6px;
   --glow-14: 7.7px;
+  --text-glow: 3.85px;
+  --text-glow-color: rgba(93, 221, 241, 0.176);
 }
 * {
   box-sizing: border-box;
@@ -82,13 +84,15 @@ input {
   /* Hide native chrome on every engine (Firefox / IE / legacy Edge) */
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  /* Room for the custom rail */
-  padding-right: 4px;
+  /*
+   * Always reserve rail width. Toggling padding when .term-scroll-active
+   * flips near the max-height threshold caused infinite layout jitter on
+   * the replay / PK screen (padding 4↔22px → scroll needed flips forever).
+   */
+  padding-right: 22px;
+  box-sizing: border-box;
   /* Prevent the viewport from stealing vertical pans meant for the thumb */
   overscroll-behavior: contain;
-}
-.term-scroll-active .term-scroll-viewport {
-  padding-right: 22px;
 }
 .term-scroll-viewport::-webkit-scrollbar {
   width: 0 !important;
@@ -286,6 +290,8 @@ input {
   z-index: 4;
   inset: 0;
   pointer-events: none;
+  /* Inherited by interface text; scales with the glow setting slider. */
+  text-shadow: 0 0 var(--text-glow) var(--text-glow-color);
 }
 .screen,
 .overlay,
@@ -629,7 +635,7 @@ button {
   box-shadow:
     inset 0 0 0 1px #ff625922,
     0 0 10px #ff625922;
-  text-shadow: 0 0 8px #ff625944;
+  text-shadow: 0 0 calc(8px * var(--glow)) #ff625944;
 }
 .danger:hover {
   border-color: var(--red);
@@ -669,7 +675,8 @@ kbd {
     monospace;
   text-align: center;
 }
-.screen small {
+/* Title tagline only — do not pin every <small> in menu screens to the floor. */
+#title > small {
   position: absolute;
   bottom: 24px;
   left: 20px;
@@ -698,6 +705,9 @@ kbd {
 }
 .replay-card {
   width: min(720px, 88vw);
+  /* Outer card must not scroll — only #replay-list has the custom rail. */
+  max-height: none;
+  overflow: visible;
 }
 .replay-intro {
   margin: -12px 0 22px;
@@ -725,11 +735,18 @@ kbd {
   border: 1px solid #d5e6df21;
   background: #061317;
 }
-.replay-share-tools label,
-.replay-share-tools small {
+.replay-share-tools label {
   color: #bcd4cd9b;
   font:
     10px/1.5 "DM Mono",
+    monospace;
+}
+.replay-share-tools .replay-share-hint {
+  display: block;
+  line-height: 1.45;
+  color: #9ab8b288;
+  font:
+    10px/1.45 "DM Mono",
     monospace;
 }
 .replay-share-tools textarea {
@@ -744,10 +761,32 @@ kbd {
     10px/1.5 "DM Mono",
     monospace;
 }
+/* Under textarea, right of import button, above the replay list. */
+.replay-import-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 .replay-share-tools button {
-  justify-self: start;
+  flex: 0 0 auto;
   padding: 8px 12px;
   font-size: 11px;
+  white-space: nowrap;
+}
+#replay-import-status {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: #5dddf1;
+  font:
+    10px/1.45 "DM Mono",
+    monospace;
+  word-break: break-all;
+}
+#replay-import-status:empty {
+  display: none;
 }
 .replay-list {
   display: grid;
@@ -853,7 +892,7 @@ kbd {
     sans-serif;
   letter-spacing: 1px;
   color: #dffff0;
-  text-shadow: 0 0 12px #5dddf144;
+  text-shadow: 0 0 calc(12px * var(--glow)) #5dddf144;
 }
 .about-aka {
   color: var(--red);
@@ -895,23 +934,6 @@ kbd {
     500 10px "DM Mono",
     monospace;
   letter-spacing: 1px;
-}
-.about-footer-note {
-  margin-top: 12px !important;
-  padding-top: 12px;
-  border-top: 1px dashed #5dddf133;
-  color: #d5e7e1bc !important;
-  font-style: italic;
-}
-.about-footer-note span {
-  display: inline-block;
-  margin-top: 6px;
-  color: #5dddf188;
-  font:
-    500 10px "DM Mono",
-    monospace;
-  font-style: normal;
-  letter-spacing: 2px;
 }
 @media (max-width: 700px) {
   .about-grid {
@@ -1056,6 +1078,8 @@ kbd {
 }
 .settings-card {
   width: min(620px, 88vw);
+}
+.settings-card:not(.replay-card) {
   max-height: calc(100vh - 48px);
   overflow-y: auto;
 }
@@ -1064,11 +1088,12 @@ kbd {
  * (not only on the wrap): percentage max-height of a parent that only has
  * max-height (no explicit height) is unreliable, and max-height:none made
  * scrollHeight === clientHeight so the custom rail never activated on desktop.
+ * Replay/PK uses a rail only on .replay-list — never on the outer card.
  */
 .term-scroll:has(> .settings-card) {
   width: min(620px, 88vw);
 }
-.term-scroll:has(> .settings-card.replay-card) {
+.term-scroll:has(> .settings-card.about-card) {
   width: min(720px, 88vw);
 }
 .term-scroll > .settings-card {
@@ -1331,7 +1356,7 @@ kbd {
   font:
     11px "DM Mono",
     monospace;
-  text-shadow: 0 0 8px #5dddf144;
+  text-shadow: 0 0 calc(8px * var(--glow)) #5dddf144;
 }
 .seed-preview {
   margin: 14px 0 23px;
@@ -1607,7 +1632,7 @@ kbd {
   color: var(--channel);
   font-size: 9px;
   font-weight: 500;
-  text-shadow: 0 0 7px var(--channel);
+  text-shadow: 0 0 calc(7px * var(--glow)) var(--channel);
 }
 .channel-bar {
   grid-column: 1 / -1;
@@ -1743,7 +1768,7 @@ kbd {
 .crest {
   color: var(--green);
   font-size: 38px;
-  text-shadow: 0 0 20px var(--green);
+  text-shadow: 0 0 calc(20px * var(--glow)) var(--green);
 }
 .result-actions {
   display: flex;
@@ -2399,23 +2424,23 @@ kbd {
 }
 #result-rank[data-rank="S"] {
   color: #ffd166;
-  text-shadow: 0 0 20px #ffd16688;
+  text-shadow: 0 0 calc(20px * var(--glow)) #ffd16688;
 }
 #result-rank[data-rank="A"] {
   color: var(--blue);
-  text-shadow: 0 0 20px #5dddf188;
+  text-shadow: 0 0 calc(20px * var(--glow)) #5dddf188;
 }
 #result-rank[data-rank="B"] {
   color: var(--green);
-  text-shadow: 0 0 20px #a9ef6888;
+  text-shadow: 0 0 calc(20px * var(--glow)) #a9ef6888;
 }
 #result-rank[data-rank="C"] {
   color: #f4fff9;
-  text-shadow: 0 0 20px #f4fff988;
+  text-shadow: 0 0 calc(20px * var(--glow)) #f4fff988;
 }
 #result-rank[data-rank="D"] {
   color: #8b9a9b;
-  text-shadow: 0 0 16px #8b9a9b66;
+  text-shadow: 0 0 calc(16px * var(--glow)) #8b9a9b66;
 }
 .mobile-browser[data-view-mode="2d"] .mobile-move .left,
 .mobile-browser[data-view-mode="2d"] .mobile-move .right {

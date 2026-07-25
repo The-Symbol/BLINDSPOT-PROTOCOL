@@ -63,8 +63,14 @@ export function attachTerminalScroll(viewport) {
 
   function refresh() {
     const m = metrics();
-    const needed = m.scrollH > m.viewH + 1;
-    wrap.classList.toggle("term-scroll-active", needed);
+    // Hysteresis: avoid flapping active state when scrollH ≈ viewH (1px noise,
+    // subpixel rounding, or font metric shifts). Rail visibility must not
+    // change layout — CSS always reserves padding-right for the rail.
+    const wasActive = wrap.classList.contains("term-scroll-active");
+    const needed = wasActive
+      ? m.scrollH > m.viewH + 0.5
+      : m.scrollH > m.viewH + 2;
+    if (needed !== wasActive) wrap.classList.toggle("term-scroll-active", needed);
     if (!needed) {
       thumb.style.height = "0px";
       thumb.style.transform = "translateY(0)";
@@ -72,8 +78,11 @@ export function attachTerminalScroll(viewport) {
     }
     // Re-measure after rail becomes visible (clientHeight was 0 while display:none).
     const m2 = metrics();
-    thumb.style.height = `${m2.thumbH}px`;
-    thumb.style.transform = `translateY(${m2.thumbTop}px)`;
+    const nextH = `${m2.thumbH}px`;
+    const nextY = `translateY(${m2.thumbTop}px)`;
+    // Skip style writes that don't change — reduces ResizeObserver churn.
+    if (thumb.style.height !== nextH) thumb.style.height = nextH;
+    if (thumb.style.transform !== nextY) thumb.style.transform = nextY;
   }
 
   function scheduleRefresh() {

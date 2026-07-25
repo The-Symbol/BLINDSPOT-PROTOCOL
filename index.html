@@ -59,17 +59,25 @@
             局会加密保存在本机。选择与当前显示模式一致的记录，即可生成竞速机器人；它不会发射可见声波或显影墙体。
           </p>
           <div class="replay-share-tools">
-            <label for="replay-import">导入加密回放字符串</label>
+            <label for="replay-import"
+              >导入分享链接或加密回放字符串</label
+            >
             <textarea
               id="replay-import"
               rows="3"
               spellcheck="false"
-              placeholder="粘贴 BSP1. 开头的回放字符串"
+              placeholder="粘贴 pastes.dev 链接，或 BSP1. 开头的加密字符串"
             ></textarea>
-            <button id="replay-import-btn" class="ghost" type="button">
-              导入回放
-            </button>
-            <small id="replay-import-status" aria-live="polite"></small>
+            <div class="replay-import-row">
+              <button id="replay-import-btn" class="ghost" type="button">
+                导入回放
+              </button>
+              <small id="replay-import-status" aria-live="polite"></small>
+            </div>
+            <small class="replay-share-hint"
+              >导出时会将加密串上传至 pastes.dev
+              并复制分享链接；导入链接时自动拉取密文。</small
+            >
           </div>
           <div id="replay-list" class="replay-list" aria-live="polite"></div>
         </div>
@@ -170,7 +178,7 @@
           <label class="setting-row"
             ><span
               ><b>辉光强度</b
-              ><small>调节声波、墙体、能源与终端光源的整体发光感。</small></span
+              ><small>调节声波、墙体、能源、终端光源与界面文字的整体发光感。</small></span
             >
             <div class="range-control">
               <input
@@ -353,15 +361,11 @@
               <p>
                 核心循环：种子迷宫生成 → 声呐显影 → 能源管理 →
                 终点补给。本地最多保留 100
-                条加密回放，可导出分享串或生成竞速幽灵。
+                条加密回放，可导出 pastes.dev 分享链接或生成竞速幽灵。
               </p>
               <p>
                 显示模式（2D / 3D）在开局锁定；手机端支持虚拟摇杆与滑动视角。设置中的
                 CRT、辉光、灵敏度与音量会保存在本机。
-              </p>
-              <p class="about-footer-note">
-                不要相信黑暗。相信回声。<br />
-                <span>BLINDSPOT PROTOCOL · NAVIGATION MODULE 03</span>
               </p>
             </section>
           </div>
