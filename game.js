@@ -2275,6 +2275,27 @@ document.querySelectorAll("[data-mobile-wave]").forEach((button) =>
     shoot(button.dataset.mobileWave);
   }),
 );
+// Fullscreen toggle for mobile
+(function () {
+  const btn = document.getElementById("mobile-fullscreen-btn");
+  if (!btn) return;
+  function updateFsLabel() {
+    btn.textContent = document.fullscreenElement ? "⛶" : "⛶";
+    btn.setAttribute(
+      "aria-label",
+      document.fullscreenElement ? "退出全屏" : "进入全屏",
+    );
+  }
+  btn.addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+    }
+  });
+  document.addEventListener("fullscreenchange", updateFsLabel);
+  updateFsLabel();
+})();
 syncMobileControlsTest();
 document.getElementById("mobile-controls-test").onclick = () => {
   mobileControlsTest = !mobileControlsTest;

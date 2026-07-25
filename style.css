@@ -2017,6 +2017,34 @@ kbd {
   display: none;
   pointer-events: none;
 }
+.mobile-fullscreen {
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: 9;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dffff052;
+  border-radius: 9px;
+  background: #07171dc9;
+  color: #e8fff7;
+  font-size: 20px;
+  box-shadow:
+    inset 0 0 14px #5dddf10c,
+    0 0 var(--glow-10) #5dddf134;
+  backdrop-filter: blur(5px);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.mobile-fullscreen:active {
+  transform: scale(0.92);
+  background: #dffff028;
+}
 .mobile-browser #hud:not(.hidden) ~ #mobile-controls {
   display: block;
 }
