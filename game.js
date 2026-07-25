@@ -1456,9 +1456,10 @@ function resize() {
   }
 }
 function view() {
-  const pad = 48,
-    top = 120,
-    bottom = 55,
+  const mobile = mobileControlsEnabled(),
+    pad = mobile ? 16 : 48,
+    top = mobile ? 68 : 120,
+    bottom = mobile ? 16 : 55,
     cell = Math.min(
       (viewport.width - pad * 2) / COLS,
       (viewport.height - top - bottom) / ROWS,
@@ -2302,6 +2303,11 @@ document.querySelectorAll("[data-mobile-wave]").forEach((button) =>
   });
   document.addEventListener("fullscreenchange", updateFsLabel);
   updateFsLabel();
+})();
+// Mobile reset button
+(function () {
+  const resetBtn = document.getElementById("mobile-reset-btn");
+  if (resetBtn) resetBtn.addEventListener("click", resetMap);
 })();
 syncMobileControlsTest();
 document.getElementById("mobile-controls-test").onclick = () => {
