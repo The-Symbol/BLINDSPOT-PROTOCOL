@@ -2355,27 +2355,36 @@ kbd {
 .mobile-browser .primary,
 .mobile-browser .ghost,
 .mobile-browser .back {
-  padding: 7px 11px;
-  font-size: 11px;
-  letter-spacing: 0.4px;
+  padding: 6px 10px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
 }
 .mobile-browser .primary b {
-  font-size: 13px;
-  margin-left: 6px;
+  font-size: 12px;
+  margin-left: 5px;
 }
 .mobile-browser .settings-card,
 .mobile-browser .help-card {
-  padding: 14px;
+  padding: 12px;
+  width: 100%;
+}
+.mobile-browser .term-scroll:has(> .settings-card) {
+  width: min(92vw, 400px);
+}
+.mobile-browser .term-scroll:has(> .settings-card.about-card) {
   width: min(92vw, 420px);
+}
+.mobile-browser .term-scroll > .settings-card {
+  max-height: calc(100vh - 100px);
 }
 .mobile-browser .settings-card h2,
 .mobile-browser .help-card h2 {
-  font-size: 18px;
-  margin: 3px 0 12px;
+  font-size: 16px;
+  margin: 2px 0 10px;
 }
 .mobile-browser .settings-card em,
 .mobile-browser .help-card em {
-  font-size: 8px;
+  font-size: 7px;
 }
 .mobile-browser .setting-row b {
   font-size: 11px;
@@ -2392,11 +2401,11 @@ kbd {
   font-size: 11px;
 }
 .mobile-browser .about-card {
-  width: min(92vw, 440px);
+  width: min(92vw, 400px);
 }
 .mobile-browser .about-card h2 {
-  font-size: 18px;
-  margin: 3px 0 12px;
+  font-size: 16px;
+  margin: 2px 0 10px;
 }
 .mobile-browser .about-grid {
   grid-template-columns: 1fr;
@@ -2412,26 +2421,26 @@ kbd {
   font-size: 10px;
 }
 .mobile-browser .modal {
-  padding: 18px;
-  width: min(86vw, 300px);
+  padding: 16px;
+  width: min(84vw, 280px);
 }
 .mobile-browser .modal h2 {
-  font-size: 22px;
+  font-size: 20px;
 }
 .mobile-browser .modal p {
-  font-size: 11px;
-  margin: 0 0 12px;
+  font-size: 10px;
+  margin: 0 0 10px;
 }
 .mobile-browser .modal button {
-  width: 160px;
-  padding: 7px 11px;
-  font-size: 11px;
+  width: 150px;
+  padding: 6px 10px;
+  font-size: 10px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 440px);
+  width: min(92vw, 400px);
 }
 .mobile-browser .replay-card h2 {
-  font-size: 18px;
+  font-size: 16px;
 }
 .mobile-browser .replay-intro {
   font-size: 10px;
