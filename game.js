@@ -48,6 +48,10 @@ import { attachTerminalScrollAll } from "./terminal-scroll.js";
 const canvas = document.getElementById("game"),
   ctx = canvas.getContext("2d"),
   storage = createSafeStorage();
+const launchMask = document.getElementById("launch-mask"),
+  launchMode = launchMask.querySelector(".launch-mode"),
+  launchSeed = launchMask.querySelector(".launch-seed"),
+  launchLabel = launchMask.querySelector(".launch-label");
 const TAU = Math.PI * 2,
   DEFAULT_FOV_DEGREES = 67;
 const TYPES = {
@@ -290,27 +294,77 @@ function wallFromPacked(hits, columnIndex) {
 function fresh(state) {
   return createGameState(state);
 }
-function show(name) {
-  ui.replayControls.classList.toggle(
-    "hidden",
-    name !== "hud" || !game.playback,
+
+const MENU_SCREENS = new Set([
+  "title",
+  "pause",
+  "replays",
+  "settings",
+  "display",
+  "help",
+  "about",
+]);
+const PANEL_MENUS = new Set([
+  "replays",
+  "settings",
+  "display",
+  "help",
+  "about",
+]);
+const ALL_UI_KEYS = [
+  "title",
+  "replays",
+  "settings",
+  "display",
+  "help",
+  "about",
+  "hud",
+  "landscapePrompt",
+  "pause",
+  "result",
+  "deleteConfirm",
+];
+const TRANSITION_MS = 360;
+const reduceMotionQuery =
+  typeof matchMedia === "function"
+    ? matchMedia("(prefers-reduced-motion: reduce)")
+    : { matches: false };
+let activeScreen = "title";
+let screenTransition = null;
+let screenTransitionToken = 0;
+
+function prefersReducedMotion() {
+  return Boolean(reduceMotionQuery.matches);
+}
+
+function clearScreenTransitionClasses(el) {
+  if (!el) return;
+  el.classList.remove(
+    "screen-enter",
+    "screen-enter-active",
+    "screen-leave",
+    "screen-leave-active",
+    "screen-fade-in",
+    "screen-fade-in-active",
+    "screen-fade-out",
+    "screen-fade-out-active",
+    "overlay-enter",
+    "overlay-enter-active",
+    "overlay-leave",
+    "overlay-leave-active",
+    "is-transitioning",
   );
-  for (const k of [
-    "title",
-    "replays",
-    "settings",
-    "display",
-    "help",
-    "about",
-    "hud",
-    "landscapePrompt",
-    "pause",
-    "result",
-    "deleteConfirm",
-  ])
-    ui[k].classList.toggle("hidden", k !== name);
-  // Screens start as display:none; remeasure custom rails after they become visible.
-  queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
+}
+
+function waitMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function nextPaint() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function applyMusicForScreen(name) {
   // Menu screens use the title theme. Pause/result keep the in-run BGM until
   // finish()/finishPk() crossfades, or the player returns to title.
   if (
@@ -322,6 +376,165 @@ function show(name) {
     (name === "display" && displayReturn !== "pause")
   )
     music.playTitle(name === "title" ? 1000 : 600);
+}
+
+function snapShow(name) {
+  ui.replayControls.classList.toggle(
+    "hidden",
+    name !== "hud" || !game.playback,
+  );
+  for (const k of ALL_UI_KEYS) {
+    const el = ui[k];
+    if (!el) continue;
+    clearScreenTransitionClasses(el);
+    el.classList.toggle("hidden", k !== name);
+  }
+  activeScreen = name;
+  // Screens start as display:none; remeasure custom rails after they become visible.
+  queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
+  applyMusicForScreen(name);
+}
+
+/**
+ * Animated menu transition:
+ * - Enter panel from title: title fades out; panel fades in then expands vertically.
+ * - Leave panel to title/parent: panel collapses + fades; parent fades in.
+ * - Non-menu (hud/pause/result) and reduced-motion: instant snap.
+ */
+async function show(name, options = {}) {
+  const force = Boolean(options.force);
+  const from = activeScreen;
+  if (!force && name === from && !screenTransition) {
+    applyMusicForScreen(name);
+    return;
+  }
+
+  // Cancel any in-flight transition by snapping the destination.
+  screenTransitionToken += 1;
+  const token = screenTransitionToken;
+  if (screenTransition) {
+    try {
+      await screenTransition;
+    } catch (_) {}
+  }
+  if (token !== screenTransitionToken) return;
+
+  const useAnim =
+    !force &&
+    !prefersReducedMotion() &&
+    MENU_SCREENS.has(from) &&
+    MENU_SCREENS.has(name) &&
+    from !== name;
+  // Overlay screens (pause, result) entering/leaving gameplay also get animation.
+  const overlayAnim =
+    !force &&
+    !prefersReducedMotion() &&
+    ((name === "pause" && from === "hud") ||
+     (from === "pause" && name === "hud") ||
+     (name === "result" && from === "hud"));
+
+  if (!useAnim && !overlayAnim) {
+    snapShow(name);
+    return;
+  }
+
+  const fromEl = ui[from];
+  const toEl = ui[name];
+  if (!fromEl || !toEl) {
+    snapShow(name);
+    return;
+  }
+
+  const enterPanel = PANEL_MENUS.has(name);
+  const leavePanel = PANEL_MENUS.has(from);
+  const run = (async () => {
+    document.body.classList.add("ui-transitioning");
+    ui.replayControls.classList.toggle(
+      "hidden",
+      name !== "hud" || !game.playback,
+    );
+
+    // Keep both screens painted during the crossfade / panel morph.
+    clearScreenTransitionClasses(fromEl);
+    clearScreenTransitionClasses(toEl);
+    fromEl.classList.remove("hidden");
+    toEl.classList.remove("hidden");
+    fromEl.classList.add("is-transitioning");
+    toEl.classList.add("is-transitioning");
+
+    if (overlayAnim && name === "pause") {
+      // Entering pause from gameplay: overlay fades in, modal scales up.
+      toEl.classList.add("overlay-enter");
+    } else if (overlayAnim && from === "pause" && name === "hud") {
+      // Leaving pause back to gameplay: overlay fades out.
+      fromEl.classList.add("overlay-leave");
+    } else if (overlayAnim && name === "result") {
+      toEl.classList.add("overlay-enter");
+    } else if (enterPanel && !PANEL_MENUS.has(from)) {
+      // Overlay → panel: hide overlay immediately; panel enters with animation.
+      if (!fromEl.classList.contains("overlay")) {
+        fromEl.classList.add("screen-fade-out");
+      }
+      toEl.classList.add("screen-enter");
+    } else if (leavePanel && (name === "title" || MENU_SCREENS.has(name))) {
+      fromEl.classList.add("screen-leave");
+      toEl.classList.add(
+        name === "title" || !PANEL_MENUS.has(name)
+          ? "screen-fade-in"
+          : "screen-enter",
+      );
+    } else {
+      fromEl.classList.add("screen-fade-out");
+      toEl.classList.add("screen-fade-in");
+    }
+
+    await nextPaint();
+    await nextPaint();
+    if (token !== screenTransitionToken) return;
+
+    fromEl.classList.add(
+      fromEl.classList.contains("screen-leave")
+        ? "screen-leave-active"
+        : fromEl.classList.contains("overlay-leave")
+          ? "overlay-leave-active"
+          : "screen-fade-out-active",
+    );
+    toEl.classList.add(
+      toEl.classList.contains("screen-enter")
+        ? "screen-enter-active"
+        : toEl.classList.contains("overlay-enter")
+          ? "overlay-enter-active"
+          : "screen-fade-in-active",
+    );
+
+    applyMusicForScreen(name);
+    await waitMs(TRANSITION_MS);
+    if (token !== screenTransitionToken) return;
+
+    for (const k of ALL_UI_KEYS) {
+      const el = ui[k];
+      if (!el) continue;
+      clearScreenTransitionClasses(el);
+      el.classList.toggle("hidden", k !== name);
+    }
+    activeScreen = name;
+    // Returning to title: re-trigger the boot-in glitch animation on h1.
+    if (name === "title") {
+      const titleEl = ui.title;
+      if (titleEl) {
+        titleEl.classList.remove("title-boot", "title-return");
+        void titleEl.offsetWidth; // force reflow
+        titleEl.classList.add("title-boot");
+      }
+    }
+    queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
+  })();
+
+  screenTransition = run.finally(() => {
+    document.body.classList.remove("ui-transitioning");
+    if (screenTransition === run) screenTransition = null;
+  });
+  await screenTransition;
 }
 function randomSeed() {
   return Math.random().toString(36).slice(2, 9).toUpperCase();
@@ -501,18 +714,52 @@ function renderReplayList(replays) {
   queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
 }
 const expandedChains = new Set();
+/** In-memory list cache so reopening PK does not re-decrypt every record. */
+let replayListCache = null;
+let replayListCachePromise = null;
+
+function invalidateReplayListCache() {
+  replayListCache = null;
+  replayListCachePromise = null;
+}
+
+async function getReplayList(force = false) {
+  if (!force && replayListCache) return replayListCache;
+  if (!force && replayListCachePromise) return replayListCachePromise;
+  replayListCachePromise = loadReplays()
+    .then((list) => {
+      replayListCache = list;
+      replayListCachePromise = null;
+      return list;
+    })
+    .catch((error) => {
+      replayListCachePromise = null;
+      throw error;
+    });
+  return replayListCachePromise;
+}
+
 async function openReplays() {
-  ui.replayList.textContent = "正在读取本地加密回放…";
-  show("replays");
+  // Paint the menu immediately; decrypt in the background so the transition is not blocked.
+  if (!replayListCache) ui.replayList.textContent = "正在读取本地加密回放…";
+  else renderReplayList(replayListCache);
+  const transition = show("replays");
   try {
-    renderReplayList(await loadReplays());
+    const list = await getReplayList();
+    if (activeScreen === "replays" || !ui.replays.classList.contains("hidden"))
+      renderReplayList(list);
   } catch (_) {
-    ui.replayList.textContent = "无法读取本地回放。";
+    if (!replayListCache)
+      ui.replayList.textContent = "无法读取本地回放。";
   }
+  await transition;
 }
 async function startSavedReplay(id, challenge) {
-  const replay = (await loadReplays()).find((entry) => entry.id === id);
-  if (!replay) return openReplays();
+  const replay = (await getReplayList()).find((entry) => entry.id === id);
+  if (!replay) {
+    invalidateReplayListCache();
+    return openReplays();
+  }
   seedText = replay.seed;
   ui.seedInput.value = seedText;
   settingsViewMode = replay.mode;
@@ -590,6 +837,19 @@ function seekReplay(offset) {
   game.replayEventIndex = replayEventCursor(activeGhostReplay, time);
   updateHud();
 }
+/** Wrap each character in a <span> with a random animation-delay for per-char flicker. */
+function setFlickerText(el, text) {
+  el.textContent = "";
+  const frag = document.createDocumentFragment();
+  for (const ch of text) {
+    const span = document.createElement("span");
+    span.textContent = ch;
+    span.className = "flicker-char";
+    span.style.setProperty("--fd", `${(Math.random() * 1.0).toFixed(3)}s`);
+    frag.appendChild(span);
+  }
+  el.appendChild(frag);
+}
 function start(ghostReplay = null, playback = false) {
   // Playback is passive: always restore the browser cursor even if a previous
   // first-person session left Pointer Lock active. Leave "play" first so the
@@ -605,11 +865,64 @@ function start(ghostReplay = null, playback = false) {
   replayPaused = false;
   updateReplayControls();
   setViewMode(settingsViewMode);
+  // Resolve the seed now so the mask can display it, but defer heavy work.
   const seed = normalizeSeed();
+  const isPK = Boolean(ghostReplay && !playback);
+  const modeLabel = isPK ? "对战" : playback ? "回放" : "标准";
+  const modeClass = isPK ? "mode-pk" : playback ? "mode-replay" : "mode-standard";
+  const viewLabel = settingsViewMode === "3d" ? "3D" : "2D";
+  launchLabel.textContent = "BLINDSPOT PROTOCOL";
+  setFlickerText(launchMode, `MODE · ${modeLabel} · ${viewLabel}`);
+  launchSeed.textContent = "VISUAL MODULE FAILURE · NAVIGATION PROTOCOL 03";
+
+  if (prefersReducedMotion()) {
+    // Reduced motion: load game immediately, no mask.
+    buildAndStartGame(seed, ghostReplay, playback);
+    return;
+  }
+
+  // ── Phase 1: show launch mask, bars expand from corners ──
+  game.launching = true;
+  launchMask.className = `launch-mask ${modeClass}`;
+  launchMask.classList.remove("hidden");
+  launchMask.classList.add("launch-start");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      launchMask.classList.remove("launch-start");
+      launchMask.classList.add("launch-load");
+    });
+  });
+
+  // Phase 2: after bars cover the screen, build the game behind the mask.
+  const EXPAND_MS  = 1050;
+  const HOLD_MS    = 1000;
+  const SHRINK_MS  = 550;
+
+  setTimeout(() => {
+    buildAndStartGame(seed, ghostReplay, playback);
+  }, EXPAND_MS);
+
+  // Phase 3: after hold, shrink the mask away.
+  setTimeout(() => {
+    launchMask.classList.remove("launch-load");
+    launchMask.classList.add("launch-hide");
+  }, EXPAND_MS + HOLD_MS);
+
+  // Phase 4: clean up mask DOM — unlock input only after shrink completes.
+  setTimeout(() => {
+    launchMask.classList.add("hidden");
+    launchMask.classList.remove("launch-hide", modeClass);
+    game.launching = false;
+  }, EXPAND_MS + HOLD_MS + SHRINK_MS);
+}
+
+/** Heavy game setup that runs while the launch mask covers the screen. */
+function buildAndStartGame(seed, ghostReplay, playback) {
   maze = buildMaze(seed);
   game = fresh("play");
   game.playback = playback;
   game.challenge = Boolean(ghostReplay && !playback);
+  game.launching = true;  // will be cleared by the shrink timeout
   game.replayEventIndex = 0;
   activeGhostReplay = ghostReplay;
   replayRecorder = playback
@@ -632,7 +945,7 @@ function start(ghostReplay = null, playback = false) {
       ? "3D：WASD / 方向键移动 · 鼠标控制视角"
       : "2D：W/S 前后 · A/D / ←→ 转向";
   setLegends();
-  show("hud");
+  snapShow("hud");
   // PK uses the race theme; normal runs and passive playback use background.
   if (game.challenge) music.playRace(800);
   else music.playBackground(800);
@@ -645,6 +958,47 @@ function start(ghostReplay = null, playback = false) {
     canvas.requestPointerLock
   )
     canvas.requestPointerLock().catch(() => {});
+}
+
+/**
+ * Yellow launch mask played when returning to the title screen from pause.
+ * Covers the screen, runs the onCover callback (to switch screens), then shrinks.
+ */
+function playReturnMask(onCover) {
+  game.launching = true;
+  launchLabel.textContent = "BLINDSPOT PROTOCOL";
+  const returnMode = game.challenge ? "对战" : game.playback ? "回放" : "标准";
+  const returnView = viewMode === "3d" ? "3D" : "2D";
+  setFlickerText(launchMode, `EXIT · 退出`);
+  launchSeed.textContent = "VISUAL MODULE FAILURE · NAVIGATION PROTOCOL 03";
+  launchMask.className = "launch-mask mode-return";
+  launchMask.classList.remove("hidden");
+  launchMask.classList.add("launch-start");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      launchMask.classList.remove("launch-start");
+      launchMask.classList.add("launch-load");
+    });
+  });
+
+  const EXPAND_MS  = 1050;
+  const HOLD_MS    = 800;
+  const SHRINK_MS  = 550;
+
+  setTimeout(() => {
+    onCover();
+  }, EXPAND_MS);
+
+  setTimeout(() => {
+    launchMask.classList.remove("launch-load");
+    launchMask.classList.add("launch-hide");
+  }, EXPAND_MS + HOLD_MS);
+
+  setTimeout(() => {
+    launchMask.classList.add("hidden");
+    launchMask.classList.remove("launch-hide", "mode-return");
+    game.launching = false;
+  }, EXPAND_MS + HOLD_MS + SHRINK_MS);
 }
 function resetMap() {
   if (!seedText) return;
@@ -886,7 +1240,7 @@ function collectItems() {
       activateItem(item);
 }
 function update(dt) {
-  if (game.state !== "play") return;
+  if (game.state !== "play" || game.launching) return;
   if (game.playback && replayPaused) {
     updateHud();
     return;
@@ -915,7 +1269,15 @@ function update(dt) {
   collectCrystals();
   collectItems();
   if (game.playback && game.scoreTime >= replayDuration(activeGhostReplay)) {
-    finish(activeGhostReplay.rank, activeGhostReplay.success);
+    let rank = activeGhostReplay.rank;
+    // Convert PK ranks to completion ratings for replay viewing.
+    if (typeof rank === "string" && rank.startsWith("PK-")) {
+      const time = replayDuration(activeGhostReplay);
+      rank = activeGhostReplay.success
+        ? (time <= 50 ? "S" : time <= 70 ? "A" : time <= 100 ? "B" : "C")
+        : "D";
+    }
+    finish(rank, activeGhostReplay.success);
     return;
   }
   const playerReached =
@@ -995,6 +1357,7 @@ function saveCurrentReplay(rank, success) {
   replayRecorder = null;
   saveReplay(record)
     .then(() => {
+      invalidateReplayListCache();
       const note = "\n回放已加密保存到本地档案。";
       if (ui.resultText && !ui.resultText.textContent.includes("回放已"))
         ui.resultText.textContent += note;
@@ -1035,7 +1398,7 @@ function finishPk(winner, winningTime) {
   const playerWon = winner === "player";
   const rivalWon = winner === "rival";
   const resultRank = playerWon ? "PK-W" : rivalWon ? "PK-L" : "PK-D";
-  saveCurrentReplay(resultRank, playerWon);
+  if (!rivalWon) saveCurrentReplay(resultRank, playerWon);
   // Leave play before unlocking so pointerlockchange does not re-enter pause.
   game.state = "done";
   if (document.pointerLockElement === canvas) document.exitPointerLock();
@@ -1105,7 +1468,9 @@ function world(x, y, v) {
 function scheduleDraw() {
   // Full rate only during live play. Pause still draws the frozen scene behind
   // the menu, but at a low rate; pure GUI / background tabs go even lower.
-  if (document.hidden) setTimeout(() => requestAnimationFrame(draw), 1000 / 5);
+  // Skip canvas drawing entirely during UI transitions to avoid frame contention.
+  if (document.hidden || document.body.classList.contains("ui-transitioning"))
+    setTimeout(() => requestAnimationFrame(draw), 1000 / 5);
   else if (game.state === "play") requestAnimationFrame(draw);
   else setTimeout(() => requestAnimationFrame(draw), 1000 / 15);
 }
@@ -1734,18 +2099,23 @@ function setKey(e, value) {
   else if (code === "a" || e.key === "ArrowLeft") k = "left";
   else if (code === "d" || e.key === "ArrowRight") k = "right";
   if (!k) return;
-  if (value && (game.state !== "play" || isInteractiveTarget(e.target))) return;
+  if (value && (game.state !== "play" || game.launching || isInteractiveTarget(e.target))) return;
   inputSources.keyboard[k] = value;
   e.preventDefault();
 }
 document.addEventListener("keydown", (e) => {
   setKey(e, true);
-  if (!e.repeat && game.state === "play") {
+  if (!e.repeat && game.state === "play" && !game.launching) {
     const code = e.key.toLowerCase();
     if (code === "q") shoot("red");
     if (code === "e") shoot("green");
     if (code === "r") shoot("blue");
     if (e.key === "Escape") pauseGame();
+    if (e.key === " " && game.playback) {
+      replayPaused = !replayPaused;
+      updateReplayControls();
+      e.preventDefault();
+    }
   }
 });
 document.addEventListener("keyup", (e) => setKey(e, false));
@@ -1932,7 +2302,7 @@ document.querySelectorAll("[data-replay-speed]").forEach((button) =>
   }),
 );
 async function exportReplay(id) {
-  const replay = (await loadReplays()).find((entry) => entry.id === id);
+  const replay = (await getReplayList()).find((entry) => entry.id === id);
   if (!replay) throw new Error("Replay not found");
   ui.replayImportStatus.textContent = "正在上传加密回放到 pastes.dev…";
   try {
@@ -1978,10 +2348,11 @@ async function importReplay() {
   try {
     const replay = await importReplayShareInput(input);
     await saveReplay(replay);
+    invalidateReplayListCache();
     ui.replayImport.value = "";
     ui.replayImportStatus.textContent =
       "导入成功：可在下方观看或与该玩家 PK。";
-    renderReplayList(await loadReplays());
+    renderReplayList(await getReplayList(true));
   } catch (error) {
     const message = String(error?.message || "");
     if (/paste|download|upload|Network|fetch|Only paste/i.test(message)) {
@@ -2002,9 +2373,13 @@ function closeDeleteConfirmation() {
 ui.deleteConfirmCancel.addEventListener("click", closeDeleteConfirmation);
 ui.deleteConfirmAccept.addEventListener("click", () => {
   if (!pendingReplayDeletion) return closeDeleteConfirmation();
-  deleteReplay(pendingReplayDeletion);
+  const id = pendingReplayDeletion;
   pendingReplayDeletion = null;
-  loadReplays()
+  deleteReplay(id)
+    .then(() => {
+      invalidateReplayListCache();
+      return getReplayList(true);
+    })
     .then((replays) => {
       renderReplayList(replays);
       show("replays");
@@ -2053,12 +2428,18 @@ document.querySelectorAll("[data-action]").forEach(
         }
       } else if (a === "title") {
         // Leave play/pause before unlocking so pointerlockchange does not pause.
+        const fromPause = activeScreen === "pause";
+        const fromResult = activeScreen === "result";
         game.state = "title";
         if (document.pointerLockElement === canvas) document.exitPointerLock();
         canvas.style.cursor = "default";
         clearInput();
         resetMobilePointers();
-        show("title");
+        if ((fromPause || fromResult) && !prefersReducedMotion()) {
+          playReturnMask(() => show("title"));
+        } else {
+          show("title");
+        }
       } else if (a === "how") {
         game.state = "help";
         show("help");
@@ -2178,4 +2559,8 @@ document.getElementById("pause-btn").onclick = pauseGame;
 const terminalScrolls = attachTerminalScrollAll(
   ".replay-list, .settings-card:not(.replay-card)",
 );
+// Prefetch encrypted replays after first paint so "回放与 PK" opens without a stall.
+setTimeout(() => {
+  getReplayList().catch(() => {});
+}, 800);
 // Desired track is title by default; actual playback starts on first user gesture.

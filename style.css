@@ -310,6 +310,154 @@ button {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  contain: layout style paint;
+}
+/* Hidden screens skip layout/paint entirely for performance. */
+.screen.hidden {
+  content-visibility: auto;
+  contain: layout style paint size;
+}
+/* Block double-clicks while a menu morph is running. */
+body.ui-transitioning {
+  cursor: progress;
+}
+body.ui-transitioning .screen button,
+body.ui-transitioning .screen a,
+body.ui-transitioning .screen input,
+body.ui-transitioning .screen textarea,
+body.ui-transitioning .screen summary {
+  pointer-events: none;
+}
+.screen.is-transitioning {
+  pointer-events: none;
+  z-index: 6;
+}
+/* Title / parent: fade out (snappy nonlinear). */
+.screen.screen-fade-out {
+  opacity: 1;
+  transition: opacity 0.28s cubic-bezier(0.4, 0, 1, 1);
+  z-index: 5;
+}
+.screen.screen-fade-out-active {
+  opacity: 0;
+}
+.screen.screen-fade-in {
+  opacity: 0;
+  transition: opacity 0.32s cubic-bezier(0, 0, 0.2, 1);
+  z-index: 5;
+}
+.screen.screen-fade-in-active {
+  opacity: 1;
+}
+/*
+ * Panel menus (settings / replays / help / about / display):
+ * fade in at center then expand vertically (clip-path).
+ */
+/*
+ * Animate only the direct panel shell (card or term-scroll wrap).
+ * Nested .settings-card must NOT also scale — that would compound scaleY.
+ */
+.screen.screen-enter > .settings-card,
+.screen.screen-enter > .help-card,
+.screen.screen-enter > .term-scroll {
+  opacity: 0;
+  transform: scaleY(0.06);
+  transform-origin: center center;
+  transition:
+    opacity 0.16s cubic-bezier(0, 0, 0.2, 1),
+    transform 0.36s cubic-bezier(0.22, 1, 0.36, 1) 0.08s;
+  will-change: transform, opacity;
+}
+.screen.screen-enter > .back {
+  opacity: 0;
+  transition: opacity 0.24s cubic-bezier(0, 0, 0.2, 1) 0.12s;
+}
+.screen.screen-enter {
+  opacity: 1;
+  z-index: 7;
+}
+.screen.screen-enter-active > .settings-card,
+.screen.screen-enter-active > .help-card,
+.screen.screen-enter-active > .term-scroll {
+  opacity: 1;
+  transform: scaleY(1);
+}
+.screen.screen-enter-active > .back {
+  opacity: 1;
+}
+/*
+ * Leaving a panel: collapse toward the vertical center while fading out.
+ */
+.screen.screen-leave > .settings-card,
+.screen.screen-leave > .help-card,
+.screen.screen-leave > .term-scroll {
+  opacity: 1;
+  transform: scaleY(1);
+  transform-origin: center center;
+  transition:
+    opacity 0.24s cubic-bezier(0.4, 0, 1, 1) 0.06s,
+    transform 0.34s cubic-bezier(0.55, 0.05, 0.45, 0.95);
+  will-change: transform, opacity;
+}
+.screen.screen-leave > .back {
+  opacity: 1;
+  transition: opacity 0.14s ease;
+}
+.screen.screen-leave {
+  opacity: 1;
+  z-index: 7;
+}
+.screen.screen-leave-active > .settings-card,
+.screen.screen-leave-active > .help-card,
+.screen.screen-leave-active > .term-scroll {
+  opacity: 0;
+  transform: scaleY(0.06);
+}
+.screen.screen-leave-active > .back {
+  opacity: 0;
+}
+
+/* ── Overlay transitions (pause / result entering from gameplay) ── */
+.overlay.overlay-enter {
+  opacity: 0;
+  z-index: 8;
+}
+.overlay.overlay-enter .modal {
+  opacity: 0;
+  transform: scale(0.92) translateY(12px);
+  transition:
+    opacity 0.28s cubic-bezier(0, 0, 0.2, 1) 0.06s,
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.06s;
+}
+.overlay.overlay-enter {
+  animation: overlayFadeIn 0.32s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+.overlay.overlay-enter-active .modal {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.overlay.overlay-leave {
+  z-index: 8;
+  opacity: 1;
+  transition: opacity 0.32s cubic-bezier(0.4, 0, 1, 1);
+}
+.overlay.overlay-leave-active {
+  opacity: 0;
+}
+.overlay.overlay-leave .modal {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition:
+    opacity 0.28s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.28s cubic-bezier(0.4, 0, 1, 1);
+}
+.overlay.overlay-leave-active .modal {
+  opacity: 0;
+  transform: scale(0.95) translateY(8px);
+}
+@keyframes overlayFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(12px); }
 }
 #title {
   isolation: isolate;
@@ -391,6 +539,7 @@ button {
   max-width: min(100vw - 16px, 12ch);
   box-sizing: border-box;
   will-change: transform, filter, text-shadow;
+  contain: layout style;
   animation:
     titleMicroGlitch 0.42s steps(2, end) infinite,
     titleBurst 5s steps(1, end) infinite;
@@ -401,6 +550,23 @@ button {
     titleBootIn 1.2s steps(2, end) forwards,
     titleMicroGlitch 0.42s steps(2, end) 1.2s infinite,
     titleBurst 5s steps(1, end) 1.2s infinite;
+}
+/* Return to title: gentler slide-in, no glitch, preserves micro-glitch + burst. */
+#title.title-return h1 {
+  animation:
+    titleReturnIn 0.6s cubic-bezier(0, 0, 0.2, 1) forwards,
+    titleMicroGlitch 0.42s steps(2, end) 0.6s infinite,
+    titleBurst 5s steps(1, end) 0.6s infinite;
+}
+@keyframes titleReturnIn {
+  0% {
+    opacity: 0.4;
+    transform: translateX(-68px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-42px);
+  }
 }
 .screen h1 i {
   font-style: normal;
@@ -698,6 +864,8 @@ kbd {
   border: 1px solid var(--line);
   background: #0a181ddb;
   box-shadow: 14px 14px 0 #0005;
+  contain: layout style;
+  will-change: transform, opacity;
 }
 .help-card {
   width: min(680px, 84vw);
@@ -1738,6 +1906,7 @@ kbd {
   justify-content: center;
   background: #03090cbe;
   backdrop-filter: blur(12px);
+  contain: layout style paint;
 }
 .modal {
   width: min(410px, 86vw);
@@ -1749,6 +1918,7 @@ kbd {
   border: 1px solid #d3ebe852;
   background: #0c1d22;
   box-shadow: 15px 15px 0 #0008;
+  will-change: transform, opacity;
 }
 .modal h2 {
   margin: 9px 0;
@@ -2097,10 +2267,546 @@ kbd {
     bottom: 45px;
   }
 }
+
+/* ═══ Launch mask: fullscreen industrial terminal overlay ═══ */
+.launch-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Dark background that expands from corners to full screen */
+.launch-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    /* terminal grid */
+    linear-gradient(rgba(100,255,171,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,255,171,0.025) 1px, transparent 1px),
+    /* pulsing node overlay */
+    radial-gradient(circle 2px at 24px 24px, rgba(100,255,171,0.18) 0%, transparent 100%),
+    /* base */
+    #080a08;
+  background-size: 48px 48px, 48px 48px, 48px 48px, 100% 100%;
+  clip-path: inset(0 100% 100% 0);
+  will-change: clip-path;
+}
+/* Caution tape strips — thin bars that sweep from corners */
+.launch-bar {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 10vh;
+  z-index: 2;
+  will-change: transform, opacity;
+  /* default: green caution tape (standard mode) */
+  background: repeating-linear-gradient(
+    -45deg,
+    #64ffab 0 24px,
+    #1a2a1f 24px 48px
+  );
+  opacity: 0;
+}
+.launch-bar-tl {
+  top: 0;
+  transform: translateX(-110%);
+  border-bottom: 2px solid rgba(100, 255, 171, 0.35);
+}
+.launch-bar-br {
+  bottom: 0;
+  transform: translateX(110%);
+  border-top: 2px solid rgba(100, 255, 171, 0.35);
+}
+/* OFFLINE watermark */
+.launch-offline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 3vw;
+  padding: 2vh 2vw;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.launch-offline span {
+  font-family: "DM Mono", monospace;
+  font-size: clamp(40px, 8vw, 100px);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: rgba(100, 255, 171, 0.07);
+  user-select: none;
+  white-space: nowrap;
+}
+/* Centered info overlay */
+.launch-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 4;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.launch-label {
+  display: block;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.5em;
+  color: rgba(100, 255, 171, 0.4);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.launch-mode {
+  display: block;
+  font-family: "DM Mono", monospace;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  /* default: green (standard mode) */
+  color: #64ffab;
+  text-shadow:
+    0 0 20px rgba(100, 255, 171, 0.55),
+    0 0 80px rgba(100, 255, 171, 0.12);
+}
+.launch-seed {
+  display: block;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  color: rgba(100, 255, 171, 0.28);
+  letter-spacing: 0.3em;
+  margin-top: 8px;
+}
+/* Per-character flicker + slow squeeze from both sides */
+.flicker-char {
+  display: inline-block;
+  opacity: 0;
+  transform: scaleX(1.12);
+  /* Two concurrent animations: flicker (stepped opacity) + slow squeeze (smooth transform) */
+  animation:
+    charFlickerIn 0.8s steps(1) var(--fd, 0s) forwards,
+    charSqueezeIn 2.4s cubic-bezier(0.22, 1, 0.36, 1) var(--fd, 0s) forwards;
+}
+.launch-hide .flicker-char {
+  animation: charFlickerOut 0.3s steps(1) var(--fd, 0s) forwards;
+}
+@keyframes charFlickerIn {
+  0%   { opacity: 0; }
+  12%  { opacity: 0.8; }
+  25%  { opacity: 0; }
+  40%  { opacity: 0.6; }
+  55%  { opacity: 0.2; }
+  70%  { opacity: 1; }
+  82%  { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+@keyframes charSqueezeIn {
+  0%   { transform: scaleX(1.18) translateX(4px); }
+  100% { transform: scaleX(1) translateX(0); }
+}
+@keyframes charFlickerOut {
+  0%   { opacity: 1; transform: scaleX(1) translateX(0); }
+  20%  { opacity: 0; transform: scaleX(1.04) translateX(1px); }
+  40%  { opacity: 0.7; transform: scaleX(1.02) translateX(0.5px); }
+  60%  { opacity: 0; transform: scaleX(1.06) translateX(1px); }
+  80%  { opacity: 0.3; transform: scaleX(1.03) translateX(0.5px); }
+  100% { opacity: 0; transform: scaleX(1.08) translateX(1.5px); }
+}
+/* ── Mode: PK (red) ── */
+.launch-mask.mode-pk .launch-mode {
+  color: #ff4040;
+  text-shadow:
+    0 0 20px rgba(255, 64, 64, 0.6),
+    0 0 80px rgba(255, 64, 64, 0.15);
+}
+.launch-mask.mode-pk .launch-label {
+  color: rgba(255, 64, 64, 0.4);
+}
+.launch-mask.mode-pk .launch-seed {
+  color: rgba(255, 64, 64, 0.28);
+}
+.launch-mask.mode-pk .launch-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff4040 0 24px,
+    #2a1a1a 24px 48px
+  );
+  border-color: rgba(255, 64, 64, 0.35);
+}
+.launch-mask.mode-pk .launch-offline span {
+  color: rgba(255, 64, 64, 0.07);
+}
+.launch-mask.mode-pk .launch-glitch-lines i {
+  background: rgba(255, 64, 64, 0.12);
+}
+/* ── Mode: Replay (blue) ── */
+.launch-mask.mode-replay .launch-mode {
+  color: #42bfff;
+  text-shadow:
+    0 0 20px rgba(66, 191, 255, 0.55),
+    0 0 80px rgba(66, 191, 255, 0.12);
+}
+.launch-mask.mode-replay .launch-label {
+  color: rgba(66, 191, 255, 0.4);
+}
+.launch-mask.mode-replay .launch-seed {
+  color: rgba(66, 191, 255, 0.28);
+}
+.launch-mask.mode-replay .launch-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #42bfff 0 24px,
+    #1a2430 24px 48px
+  );
+  border-color: rgba(66, 191, 255, 0.35);
+}
+.launch-mask.mode-replay .launch-offline span {
+  color: rgba(66, 191, 255, 0.07);
+}
+.launch-mask.mode-replay .launch-glitch-lines i {
+  background: rgba(66, 191, 255, 0.12);
+}
+/* ── Mode: Return to title (yellow) ── */
+.launch-mask.mode-return .launch-mode {
+  color: #ffd740;
+  text-shadow:
+    0 0 20px rgba(255, 215, 64, 0.55),
+    0 0 80px rgba(255, 215, 64, 0.12);
+}
+.launch-mask.mode-return .launch-label {
+  color: rgba(255, 215, 64, 0.4);
+}
+.launch-mask.mode-return .launch-seed {
+  color: rgba(255, 215, 64, 0.28);
+}
+.launch-mask.mode-return .launch-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #ffd740 0 24px,
+    #2a2a1a 24px 48px
+  );
+  border-color: rgba(255, 215, 64, 0.35);
+}
+.launch-mask.mode-return .launch-offline span {
+  color: rgba(255, 215, 64, 0.07);
+}
+.launch-mask.mode-return .launch-glitch-lines i {
+  background: rgba(255, 215, 64, 0.12);
+}
+/* Horizontal glitch lines */
+.launch-glitch-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+.launch-glitch-lines i {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(100, 255, 171, 0.12);
+  mix-blend-mode: screen;
+}
+.launch-glitch-lines i:nth-child(1) { top: 15%; }
+.launch-glitch-lines i:nth-child(2) { top: 33%; }
+.launch-glitch-lines i:nth-child(3) { top: 50%; }
+.launch-glitch-lines i:nth-child(4) { top: 68%; }
+.launch-glitch-lines i:nth-child(5) { top: 86%; }
+
+/* ── Industrial terminal: scan line sweep ── */
+.launch-scanline {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(100, 255, 171, 0.04) 15%,
+    rgba(100, 255, 171, 0.12) 50%,
+    rgba(100, 255, 171, 0.04) 85%,
+    transparent 100%
+  );
+  box-shadow: 0 0 18px rgba(100, 255, 171, 0.08);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  top: -3px;
+}
+
+/* ── Industrial terminal: scrolling data columns ── */
+.launch-data-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 8px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  background: linear-gradient(180deg,
+    rgba(100,255,171,0.03) 0%,
+    transparent 20%,
+    transparent 80%,
+    rgba(100,255,171,0.03) 100%
+  );
+}
+.launch-data-left { left: 16px; }
+.launch-data-right { right: 16px; }
+.launch-data-col span {
+  display: block;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: rgba(100, 255, 171, 0.25);
+  text-shadow: 0 0 6px rgba(100, 255, 171, 0.15);
+}
+.launch-mask.mode-pk .launch-data-col span {
+  color: rgba(255, 64, 64, 0.25);
+  text-shadow: 0 0 6px rgba(255, 64, 64, 0.15);
+}
+.launch-mask.mode-replay .launch-data-col span {
+  color: rgba(66, 191, 255, 0.25);
+  text-shadow: 0 0 6px rgba(66, 191, 255, 0.15);
+}
+.launch-mask.mode-return .launch-data-col span {
+  color: rgba(255, 215, 64, 0.25);
+  text-shadow: 0 0 6px rgba(255, 215, 64, 0.15);
+}
+.launch-mask.mode-pk .launch-scanline {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255, 64, 64, 0.04) 15%, rgba(255, 64, 64, 0.12) 50%, rgba(255, 64, 64, 0.04) 85%, transparent 100%);
+  box-shadow: 0 0 18px rgba(255, 64, 64, 0.08);
+}
+.launch-mask.mode-replay .launch-scanline {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(66, 191, 255, 0.04) 15%, rgba(66, 191, 255, 0.12) 50%, rgba(66, 191, 255, 0.04) 85%, transparent 100%);
+  box-shadow: 0 0 18px rgba(66, 191, 255, 0.08);
+}
+.launch-mask.mode-return .launch-scanline {
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(255, 215, 64, 0.04) 15%, rgba(255, 215, 64, 0.12) 50%, rgba(255, 215, 64, 0.04) 85%, transparent 100%);
+  box-shadow: 0 0 18px rgba(255, 215, 64, 0.08);
+}
+/* Alternating opacity for data stream lines */
+.launch-data-col span:nth-child(odd) {
+  opacity: 0.7;
+}
+.launch-data-col span:nth-child(3n) {
+  opacity: 1;
+  font-size: 11px;
+}
+
+/* ── Load-in state ── */
+.launch-load .launch-bg {
+  animation: launchBgExpand 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards,
+             launchGridPulse 3s ease-in-out 1.55s infinite;
+}
+.launch-load .launch-bar-tl {
+  animation: launchBarTL 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.launch-load .launch-bar-br {
+  animation: launchBarBR 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.launch-load .launch-offline {
+  animation: launchOfflineIn 0.6s cubic-bezier(0, 0, 0.2, 1) 0.55s forwards,
+             launchBgExpand 1.0s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
+}
+.launch-load .launch-info {
+  animation: launchInfoIn 0.5s cubic-bezier(0, 0, 0.2, 1) 0.45s forwards,
+             launchInfoFlicker 0.12s steps(1) 0.45s 6;
+}
+.launch-load .launch-glitch-lines {
+  animation: launchGlitchFade 1.8s steps(1) 0.1s forwards;
+}
+.launch-load .launch-glitch-lines i {
+  animation: launchGlitchLine 0.22s steps(1) infinite;
+}
+.launch-load .launch-glitch-lines i:nth-child(2) { animation-delay: 0.05s; }
+.launch-load .launch-glitch-lines i:nth-child(3) { animation-delay: 0.11s; }
+.launch-load .launch-glitch-lines i:nth-child(4) { animation-delay: 0.17s; }
+.launch-load .launch-glitch-lines i:nth-child(5) { animation-delay: 0.23s; }
+.launch-load .launch-scanline {
+  animation: launchScanSweep 2.8s linear 0.2s infinite;
+}
+.launch-load .launch-data-col {
+  animation: launchDataFadeIn 0.8s ease 0.3s forwards;
+}
+.launch-load .launch-data-left {
+  animation: launchDataFadeIn 0.8s ease 0.3s forwards, launchDataScrollUp 12s linear 0.3s infinite;
+}
+.launch-load .launch-data-right {
+  animation: launchDataFadeIn 0.8s ease 0.3s forwards, launchDataScrollDown 14s linear 0.3s infinite;
+}
+
+/* ── Hide state ── */
+.launch-hide .launch-bg {
+  animation: launchBgShrink 0.55s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.launch-hide .launch-bar-tl {
+  animation: launchBarHideTL 0.5s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.launch-hide .launch-bar-br {
+  animation: launchBarHideBR 0.5s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.launch-hide .launch-offline {
+  opacity: 0;
+}
+.launch-hide .launch-info {
+  animation: launchInfoOut 0.45s cubic-bezier(0.4, 0, 1, 1) forwards,
+             launchInfoFlicker 0.1s steps(1) 0.05s 3;
+}
+.launch-hide .launch-glitch-lines {
+  opacity: 0;
+}
+.launch-hide .launch-scanline {
+  opacity: 0;
+  animation: none;
+}
+.launch-hide .launch-data-col {
+  opacity: 0;
+  animation: none;
+}
+
+/* ── Start state: everything hidden ── */
+.launch-start .launch-bg { opacity: 0; }
+.launch-start .launch-bar-tl { transform: translateX(-110%); opacity: 0; }
+.launch-start .launch-bar-br { transform: translateX(110%); opacity: 0; }
+.launch-start .launch-offline { opacity: 0; }
+.launch-start .launch-info   { opacity: 0; }
+.launch-start .launch-glitch-lines { opacity: 0; }
+.launch-start .launch-scanline { opacity: 0; }
+.launch-start .launch-data-col { opacity: 0; }
+
+/* ── Keyframes ── */
+@keyframes launchBgExpand {
+  /* Bars are in place — background appears at their coverage area */
+  0%   { clip-path: polygon(0 0, 100% 0, 100% 10%, 0 10%, 0 90%, 100% 90%, 100% 100%, 0 100%); }
+  /* Expand inward from bar positions toward center */
+  55%  { clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%, 0 50%, 100% 50%, 100% 100%, 0 100%); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+}
+@keyframes launchBgShrink {
+  0%   { clip-path: inset(0 0 0 0);    opacity: 1; }
+  100% { clip-path: inset(48% 0 48% 0); opacity: 0; }
+}
+@keyframes launchBarTL {
+  0%   { transform: translateX(-110%); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateX(0);     opacity: 1; }
+}
+@keyframes launchBarBR {
+  0%   { transform: translateX(110%); opacity: 0; }
+  10%  { opacity: 1; }
+  100% { transform: translateX(0);    opacity: 1; }
+}
+@keyframes launchBarHideTL {
+  0%   { transform: translateX(0);     opacity: 1; }
+  100% { transform: translateX(110%);  opacity: 0; }
+}
+@keyframes launchBarHideBR {
+  0%   { transform: translateX(0);     opacity: 1; }
+  100% { transform: translateX(-110%); opacity: 0; }
+}
+@keyframes launchOfflineIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+/* Text squeeze-in from both sides + settle */
+@keyframes launchInfoIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scaleX(1.15) scaleY(0.9);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(0.97) scaleY(1.02);
+  }
+  70% {
+    transform: translate(-50%, -50%) scaleX(1.02) scaleY(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scaleX(1) scaleY(1);
+  }
+}
+/* Random flicker effect for text */
+@keyframes launchInfoFlicker {
+  0%   { opacity: 1; }
+  30%  { opacity: 0.4; }
+  40%  { opacity: 1; }
+  60%  { opacity: 0.6; }
+  70%  { opacity: 1; }
+  85%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+@keyframes launchInfoOut {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scaleX(1) scaleY(1); filter: none; }
+  25%  { opacity: 0.5; transform: translate(-50%, -50%) scaleX(1.06) scaleY(0.95); filter: blur(1px); }
+  40%  { opacity: 0.9; transform: translate(-50%, -50%) scaleX(0.98) scaleY(1.01); filter: none; }
+  60%  { opacity: 0.3; transform: translate(-50%, -50%) scaleX(1.08) scaleY(0.94); filter: blur(2px); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.15) scaleY(0.9); filter: blur(1px); }
+}
+@keyframes launchGlitchFade {
+  0%, 88% { opacity: 1; }
+  100%    { opacity: 0; }
+}
+@keyframes launchGlitchLine {
+  0%   { transform: translateX(0);     opacity: 0.5; }
+  20%  { transform: translateX(-18px); opacity: 0.15; }
+  40%  { transform: translateX(12px);  opacity: 0.7; }
+  60%  { transform: translateX(-6px);  opacity: 0.1; }
+  80%  { transform: translateX(4px);   opacity: 0.55; }
+  100% { transform: translateX(0);     opacity: 0.35; }
+}
+@keyframes launchScanSweep {
+  0%   { top: -3px; opacity: 0; }
+  3%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes launchDataFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes launchDataScrollUp {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+@keyframes launchDataScrollDown {
+  0%   { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+@keyframes launchGridPulse {
+  0%, 100% {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+    filter: brightness(1);
+  }
+  30% {
+    background-position: 0 0, 0 0, 12px 12px, 0 0;
+    filter: brightness(1.25);
+  }
+  60% {
+    background-position: 0 0, 0 0, 24px 24px, 0 0;
+    filter: brightness(1.4);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .orb,
   .screen h1,
   #title.title-boot h1,
+  #title.title-return h1,
   #crt-overlay,
   #crt-overlay::before,
   #crt-overlay::after {
@@ -2114,6 +2820,53 @@ kbd {
     clip-path: none;
   }
   .mobile-browser .joystick-knob {
+    transition: none !important;
+  }
+  .screen.screen-enter,
+  .screen.screen-enter-active,
+  .screen.screen-leave,
+  .screen.screen-leave-active,
+  .screen.screen-fade-in,
+  .screen.screen-fade-in-active,
+  .screen.screen-fade-out,
+  .screen.screen-fade-out-active,
+  .screen.screen-enter > .settings-card,
+  .screen.screen-enter > .help-card,
+  .screen.screen-enter > .term-scroll,
+  .screen.screen-enter > .back,
+  .screen.screen-enter-active > .settings-card,
+  .screen.screen-enter-active > .help-card,
+  .screen.screen-enter-active > .term-scroll,
+  .screen.screen-enter-active > .back,
+  .screen.screen-leave > .settings-card,
+  .screen.screen-leave > .help-card,
+  .screen.screen-leave > .term-scroll,
+  .screen.screen-leave > .back,
+  .screen.screen-leave-active > .settings-card,
+  .screen.screen-leave-active > .help-card,
+  .screen.screen-leave-active > .term-scroll,
+  .screen.screen-leave-active > .back,
+  .overlay.overlay-enter,
+  .overlay.overlay-enter .modal,
+  .overlay.overlay-enter-active .modal,
+  .overlay.overlay-leave,
+  .overlay.overlay-leave .modal,
+  .overlay.overlay-leave-active .modal {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none !important;
+    backdrop-filter: blur(12px) !important;
+  }
+  .launch-mask .launch-bg,
+  .launch-mask .launch-bar,
+  .launch-mask .launch-offline,
+  .launch-mask .launch-info,
+  .launch-mask .launch-glitch-lines,
+  .launch-mask .launch-glitch-lines i,
+  .launch-mask .launch-scanline,
+  .launch-mask .launch-data-col {
+    animation: none !important;
     transition: none !important;
   }
 }

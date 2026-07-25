@@ -276,11 +276,26 @@ function hasSubtleCrypto() {
   return Boolean(globalThis.crypto?.subtle && globalThis.crypto.getRandomValues);
 }
 
+/** Cached AES key — re-deriving SHA-256 + importKey per replay was the main open-menu stall. */
+let cachedReplayKey = null;
 async function replayKey() {
+  if (cachedReplayKey) return cachedReplayKey;
   const material = new TextEncoder().encode(KEY_MATERIAL);
   const digest = await crypto.subtle.digest("SHA-256", material);
-  return crypto.subtle.importKey("raw", digest, "AES-GCM", false, ["encrypt", "decrypt"]);
+  cachedReplayKey = await crypto.subtle.importKey(
+    "raw",
+    digest,
+    "AES-GCM",
+    false,
+    ["encrypt", "decrypt"],
+  );
+  return cachedReplayKey;
 }
+
+function acceptDecryptedReplay(replay, verifyRoute) {
+  return verifyRoute ? validateReplayRoute(replay) : validateReplay(replay);
+}
+
 export async function encryptReplay(replay) {
   validateReplayRoute(replay);
   if (!hasSubtleCrypto()) {
@@ -293,19 +308,43 @@ export async function encryptReplay(replay) {
   }
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const plaintext = new TextEncoder().encode(JSON.stringify(replay));
-  const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await replayKey(), plaintext);
-  return JSON.stringify({ version: 1, iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(ciphertext)) });
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    await replayKey(),
+    plaintext,
+  );
+  return JSON.stringify({
+    version: 1,
+    iv: bytesToBase64(iv),
+    data: bytesToBase64(new Uint8Array(ciphertext)),
+  });
 }
-export async function decryptReplay(payload) {
+
+/**
+ * Decrypt a stored/share envelope.
+ * @param {string} payload
+ * @param {{ verifyRoute?: boolean }} [options]
+ *   verifyRoute (default true): full maze path anti-cheat.
+ *   Local list loads use false — records were already route-checked on save/import.
+ */
+export async function decryptReplay(payload, options = {}) {
+  const verifyRoute = options.verifyRoute !== false;
   const envelope = JSON.parse(payload);
   if (envelope.version !== 1) throw new Error("Unsupported replay version");
   if (envelope.plain) {
     const json = new TextDecoder().decode(base64ToBytes(envelope.data));
-    return validateReplayRoute(JSON.parse(json));
+    return acceptDecryptedReplay(JSON.parse(json), verifyRoute);
   }
   if (!hasSubtleCrypto()) throw new Error("Secure crypto is unavailable");
-  const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToBytes(envelope.iv) }, await replayKey(), base64ToBytes(envelope.data));
-  return validateReplayRoute(JSON.parse(new TextDecoder().decode(plaintext)));
+  const plaintext = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: base64ToBytes(envelope.iv) },
+    await replayKey(),
+    base64ToBytes(envelope.data),
+  );
+  return acceptDecryptedReplay(
+    JSON.parse(new TextDecoder().decode(plaintext)),
+    verifyRoute,
+  );
 }
 export async function exportReplayShare(replay) {
   return SHARE_PREFIX + base64UrlEncode(await encryptReplay(replay));
@@ -483,22 +522,29 @@ export async function loadReplays(storage = null) {
   await waitForReplayStorage();
   const target = safeStorage(storage);
   const ids = readIndex(target);
+  // Decrypt in parallel; skip per-entry route rebuild (done at save/import time).
+  const results = await Promise.all(
+    ids.map(async (id) => {
+      const payload = target.getItem(`${STORAGE_PREFIX}${id}`);
+      if (!payload) return null;
+      try {
+        const replay = await decryptReplay(payload, { verifyRoute: false });
+        return replay.id === id ? replay : null;
+      } catch (_) {
+        // Ignore corrupt, incompatible, or physically impossible local records.
+        return null;
+      }
+    }),
+  );
   const replays = [];
   const validIds = [];
-  for (const id of ids) {
-    const payload = target.getItem(`${STORAGE_PREFIX}${id}`);
-    if (!payload) continue;
-    try {
-      const replay = await decryptReplay(payload);
-      if (replay.id === id) {
-        replays.push(replay);
-        validIds.push(id);
-      }
-    } catch (_) {
-      // Ignore corrupt, incompatible, or physically impossible local records.
-    }
+  for (let i = 0; i < ids.length; i++) {
+    if (!results[i]) continue;
+    replays.push(results[i]);
+    validIds.push(ids[i]);
   }
-  if (validIds.length !== ids.length) target.setItem(STORAGE_INDEX, JSON.stringify(validIds));
+  if (validIds.length !== ids.length)
+    target.setItem(STORAGE_INDEX, JSON.stringify(validIds));
   return replays;
 }
 export function deleteReplay(id, storage = null) {
