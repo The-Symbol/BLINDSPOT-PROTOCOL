@@ -458,6 +458,9 @@ async function show(name, options = {}) {
     clearScreenTransitionClasses(fromEl);
     clearScreenTransitionClasses(toEl);
     fromEl.classList.remove("hidden");
+    /* Prevent the incoming screen from flashing at full opacity before the
+       transition class (which sets opacity:0) is applied in the next lines. */
+    toEl.style.opacity = "0";
     toEl.classList.remove("hidden");
     fromEl.classList.add("is-transitioning");
     toEl.classList.add("is-transitioning");
@@ -487,6 +490,10 @@ async function show(name, options = {}) {
       fromEl.classList.add("screen-fade-out");
       toEl.classList.add("screen-fade-in");
     }
+
+    /* Now that the CSS transition class (opacity:0) is in place, clear the
+       inline guard so the CSS animation can take over. */
+    toEl.style.opacity = "";
 
     await nextPaint();
     await nextPaint();

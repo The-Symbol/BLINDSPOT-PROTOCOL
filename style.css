@@ -314,7 +314,6 @@ button {
 }
 /* Hidden screens skip layout/paint entirely for performance. */
 .screen.hidden {
-  content-visibility: auto;
   contain: layout style paint size;
 }
 /* Block double-clicks while a menu morph is running. */
@@ -2298,131 +2297,131 @@ kbd {
 
 /* Mobile scaling: shrink menu, buttons, cards, and modals for small screens. */
 .mobile-browser .screen h1 {
-  font-size: clamp(44px, 9vw, 90px);
-  letter-spacing: -4px;
+  font-size: clamp(36px, 7.5vw, 72px);
+  letter-spacing: -3px;
 }
 .mobile-browser .en-title {
-  font-size: 10px;
-  letter-spacing: 5px;
+  font-size: 9px;
+  letter-spacing: 4px;
 }
 .mobile-browser .intro {
-  font-size: 12px;
-  margin: 20px 12px 16px;
-  max-width: 340px;
-  line-height: 1.7;
+  font-size: 11px;
+  margin: 14px 10px 12px;
+  max-width: 300px;
+  line-height: 1.65;
 }
 .mobile-browser .eyebrow {
-  font-size: 8px;
-  letter-spacing: 1.5px;
+  font-size: 7px;
+  letter-spacing: 1.2px;
 }
 .mobile-browser .actions {
-  gap: 8px;
-  max-width: min(380px, 92vw);
+  gap: 6px;
+  max-width: min(340px, 92vw);
 }
 .mobile-browser .actions-row {
-  gap: 7px;
+  gap: 5px;
 }
 .mobile-browser .primary,
 .mobile-browser .ghost,
 .mobile-browser .back {
-  padding: 9px 14px;
-  font-size: 12px;
-  letter-spacing: 0.5px;
+  padding: 7px 11px;
+  font-size: 11px;
+  letter-spacing: 0.4px;
 }
 .mobile-browser .primary b {
-  font-size: 15px;
-  margin-left: 8px;
+  font-size: 13px;
+  margin-left: 6px;
 }
 .mobile-browser .settings-card,
 .mobile-browser .help-card {
-  padding: 18px;
-  width: min(92vw, 480px);
+  padding: 14px;
+  width: min(92vw, 420px);
 }
 .mobile-browser .settings-card h2,
 .mobile-browser .help-card h2 {
-  font-size: 20px;
-  margin: 4px 0 16px;
+  font-size: 18px;
+  margin: 3px 0 12px;
 }
 .mobile-browser .settings-card em,
 .mobile-browser .help-card em {
-  font-size: 9px;
+  font-size: 8px;
 }
 .mobile-browser .setting-row b {
-  font-size: 12px;
+  font-size: 11px;
 }
 .mobile-browser .setting-row small {
-  font-size: 10px;
+  font-size: 9px;
 }
 .mobile-browser .settings-card input[type="range"] {
-  height: 28px;
+  height: 24px;
 }
 .mobile-browser .settings-card input:not([type="range"]),
 .mobile-browser .settings-card select {
-  height: 34px;
-  font-size: 12px;
+  height: 30px;
+  font-size: 11px;
 }
 .mobile-browser .about-card {
-  width: min(92vw, 520px);
+  width: min(92vw, 440px);
 }
 .mobile-browser .about-card h2 {
-  font-size: 20px;
-  margin: 4px 0 16px;
+  font-size: 18px;
+  margin: 3px 0 12px;
 }
 .mobile-browser .about-grid {
   grid-template-columns: 1fr;
 }
 .mobile-browser .about-block {
   min-height: auto;
-  padding: 12px;
+  padding: 10px;
 }
 .mobile-browser .about-block h3 {
-  font-size: 11px;
+  font-size: 10px;
 }
 .mobile-browser .about-block p {
-  font-size: 11px;
+  font-size: 10px;
 }
 .mobile-browser .modal {
-  padding: 22px;
-  width: min(88vw, 340px);
+  padding: 18px;
+  width: min(86vw, 300px);
 }
 .mobile-browser .modal h2 {
-  font-size: 26px;
+  font-size: 22px;
 }
 .mobile-browser .modal p {
-  font-size: 12px;
-  margin: 0 0 16px;
+  font-size: 11px;
+  margin: 0 0 12px;
 }
 .mobile-browser .modal button {
-  width: 180px;
-  padding: 9px 14px;
-  font-size: 12px;
+  width: 160px;
+  padding: 7px 11px;
+  font-size: 11px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 520px);
+  width: min(92vw, 440px);
 }
 .mobile-browser .replay-card h2 {
-  font-size: 20px;
+  font-size: 18px;
 }
 .mobile-browser .replay-intro {
-  font-size: 11px;
+  font-size: 10px;
 }
 .mobile-browser #title small {
-  font-size: 9px;
+  font-size: 8px;
 }
 .mobile-browser .mobile-test-toggle {
-  font-size: 9px;
-  padding: 5px 8px;
+  font-size: 8px;
+  padding: 4px 6px;
 }
 .mobile-browser .seed-preview {
-  font-size: 11px;
+  font-size: 10px;
 }
 .mobile-browser .mode-select summary {
-  font-size: 12px;
-  padding: 7px 12px;
+  font-size: 11px;
+  padding: 6px 10px;
 }
 .mobile-browser .mode-select button {
-  font-size: 12px;
-  padding: 7px 12px;
+  font-size: 11px;
+  padding: 6px 10px;
 }
 
 /* ═══ Launch mask: fullscreen industrial terminal overlay ═══ */
