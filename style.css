@@ -2358,6 +2358,7 @@ kbd {
   padding: 5px 8px;
   font-size: 9px;
   letter-spacing: 0.2px;
+  border-radius: 2px;
 }
 .mobile-browser .primary b {
   font-size: 11px;
@@ -2367,6 +2368,27 @@ kbd {
 .mobile-browser .help-card {
   padding: 10px;
   width: 100%;
+  max-height: none;
+}
+.mobile-browser #help {
+  overflow: auto auto;
+  justify-content: flex-start;
+  padding-top: 60px;
+  padding-bottom: 20px;
+}
+.mobile-browser .manual-block h3 {
+  font-size: 10px;
+  margin: 0 0 5px;
+}
+.mobile-browser .manual-block p {
+  font-size: 9px;
+  line-height: 1.5;
+}
+.mobile-browser .manual-block p kbd {
+  font-size: 8px;
+}
+.mobile-browser .item-entry p {
+  font-size: 9px;
 }
 .mobile-browser .term-scroll:has(> .settings-card) {
   width: min(92vw, 340px);
@@ -2435,14 +2457,44 @@ kbd {
   width: 140px;
   padding: 5px 8px;
   font-size: 9px;
+  border-radius: 2px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 360px);
+  width: min(92vw, 280px);
 }
 .mobile-browser .replay-card h2 {
-  font-size: 14px;
+  font-size: 13px;
 }
 .mobile-browser .replay-intro {
+  font-size: 8px;
+}
+.mobile-browser .replay-share-tools {
+  padding: 8px;
+  gap: 6px;
+}
+.mobile-browser .replay-share-tools textarea {
+  padding: 6px;
+  font-size: 9px;
+}
+.mobile-browser .replay-share-tools button {
+  padding: 5px 8px;
+  font-size: 9px;
+}
+.mobile-browser .replay-share-tools label {
+  font-size: 8px;
+}
+.mobile-browser .replay-share-tools .replay-share-hint {
+  font-size: 8px;
+}
+.mobile-browser .replay-entry {
+  padding: 8px;
+  gap: 10px;
+}
+.mobile-browser .replay-entry p {
+  font-size: 9px;
+}
+.mobile-browser .replay-entry-actions button {
+  padding: 5px 7px;
   font-size: 9px;
 }
 .mobile-browser #title small {
@@ -2468,7 +2520,7 @@ kbd {
 .launch-mask {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 15;
   pointer-events: none;
   overflow: hidden;
 }
@@ -2872,6 +2924,25 @@ kbd {
 .launch-hide .launch-data-col {
   opacity: 0;
   animation: none;
+}
+
+/* ── Mobile: lightweight animations (no clip-path, GPU-friendly) ── */
+.mobile-browser .launch-bg {
+  clip-path: none !important;
+}
+.mobile-browser .launch-load .launch-bg {
+  animation: mobileLaunchBgIn 0.7s ease forwards;
+}
+.mobile-browser .launch-hide .launch-bg {
+  animation: mobileLaunchBgOut 0.4s ease forwards;
+}
+@keyframes mobileLaunchBgIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes mobileLaunchBgOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ── Start state: everything hidden ── */
@@ -3335,7 +3406,7 @@ kbd {
 .mobile-browser .mobile-key {
   width: 46px;
   height: 46px;
-  border-radius: 14px;
+  border-radius: 8px;
 }
 .mobile-browser .mobile-key.up {
   left: 51px;
@@ -3396,7 +3467,7 @@ kbd {
   display: block;
   position: fixed;
   top: auto;
-  bottom: max(120px, calc(env(safe-area-inset-bottom) + 102px));
+  bottom: max(172px, calc(env(safe-area-inset-bottom) + 154px));
   left: auto;
 }
 .mobile-browser[data-view-mode="2d"] .mobile-move .left {

@@ -1566,7 +1566,7 @@ function drawWall2D(w, color, fade, v) {
   ctx.strokeStyle = color;
   ctx.shadowColor = color;
   ctx.shadowBlur = glow(12);
-  ctx.lineWidth = 4;
+  ctx.lineWidth = mobileControlsEnabled() ? 2.5 : 4;
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
   ctx.lineTo(b.x, b.y);
