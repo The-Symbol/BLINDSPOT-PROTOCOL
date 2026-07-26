@@ -2117,7 +2117,8 @@ document.addEventListener("keydown", (e) => {
     const code = e.key.toLowerCase();
     if (code === "q") shoot("red");
     if (code === "e") shoot("green");
-    if (code === "r") shoot("blue");
+    if (code === "f") shoot("blue");
+    if (code === "r") resetMap();
     if (e.key === "Escape") pauseGame();
     if (e.key === " " && game.playback) {
       replayPaused = !replayPaused;

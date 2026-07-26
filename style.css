@@ -2409,9 +2409,9 @@ kbd {
 }
 .mobile-browser .actions-row .primary,
 .mobile-browser .actions-row .ghost {
-  min-width: 190px;
-  min-height: 90px;
-  padding: 14px 18px;
+  min-width: 130px;
+  min-height: 50px;
+  padding: 9px 14px;
 }
 .mobile-browser .primary b {
   font-size: 11px;
@@ -2444,13 +2444,13 @@ kbd {
   font-size: 9px;
 }
 .mobile-browser .term-scroll:has(> .settings-card) {
-  width: min(92vw, 420px);
+  width: min(92vw, 480px);
 }
 .mobile-browser .term-scroll:has(> .settings-card.about-card) {
-  width: min(92vw, 440px);
+  width: min(92vw, 500px);
 }
 .mobile-browser .term-scroll > .settings-card {
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 60px);
 }
 .mobile-browser .settings-card h2,
 .mobile-browser .help-card h2 {
@@ -2513,7 +2513,7 @@ kbd {
   border-radius: 2px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 380px);
+  width: min(92vw, 440px);
 }
 .mobile-browser .replay-card h2 {
   font-size: 13px;
