@@ -96,8 +96,9 @@
             <div class="seed-control">
               <input
                 id="seed-input"
-                maxlength="32"
-                placeholder="输入种子或使用随机种子"
+                maxlength="16"
+                pattern="[A-Za-z0-9_-]*"
+                placeholder="输入 16 位以内的英文、数字或符号种子"
               /><button id="random-seed-btn" class="ghost">随机</button>
             </div></label
           >
@@ -258,7 +259,7 @@
             </div>
             <button id="open-layout-editor" type="button" class="primary">进入布局编辑</button>
           </div>
-          <button class="primary" data-action="display-back">保存并返回</button>
+
         </div>
       </section>
 
@@ -338,9 +339,7 @@
               <p>达到 200 秒仍未抵达补给站将自动失败，评级为 <b>D</b>。</p>
             </section>
           </div>
-          <button class="primary" data-action="settings">
-            前往地图设置 <b>↗</b>
-          </button>
+
         </div>
       </section>
 

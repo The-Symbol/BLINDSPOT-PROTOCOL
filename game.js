@@ -571,11 +571,23 @@ async function show(name, options = {}) {
   });
   await screenTransition;
 }
+let seedRestrictionsDisabled = false, randomSeedHoldCount = 0, randomSeedHoldTimer = null, randomSeedLongPressed = false;
+function sanitizeSeed(value) {
+  const raw = String(value || "").trim();
+  return seedRestrictionsDisabled
+    ? raw
+    : raw.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 16);
+}
+function resetRandomSeedHold() {
+  randomSeedHoldCount = 0;
+  if (randomSeedHoldTimer) clearTimeout(randomSeedHoldTimer);
+  randomSeedHoldTimer = null;
+}
 function randomSeed() {
   return Math.random().toString(36).slice(2, 9).toUpperCase();
 }
 function normalizeSeed() {
-  const raw = ui.seedInput.value.trim();
+  const raw = sanitizeSeed(ui.seedInput.value);
   seedText = raw || randomSeed();
   ui.seedInput.value = seedText;
   ui.seedPreview.textContent = seedText;
@@ -605,6 +617,8 @@ function setLegends() {
   ui.blueLegend.textContent = `环扫 · ${times.blue}`;
 }
 function openSettings(from = game.state === "pause" ? "pause" : "title") {
+  // Every new wake-up/settings visit starts a fresh long-press sequence.
+  resetRandomSeedHold();
   settingsReturn = from;
   settingsViewMode = viewMode;
   ui.seedInput.value = seedText || "";
@@ -2531,11 +2545,42 @@ document.querySelectorAll("[data-action]").forEach(
     }),
 );
 ui.randomSeed.onclick = () => {
+  if (randomSeedLongPressed) {
+    randomSeedLongPressed = false;
+    return;
+  }
   ui.seedInput.value = randomSeed();
   ui.seedPreview.textContent = ui.seedInput.value;
 };
-ui.seedInput.oninput = () =>
-  (ui.seedPreview.textContent = ui.seedInput.value.trim() || "随机生成");
+ui.randomSeed.addEventListener("pointerdown", (event) => {
+  if (event.button != null && event.button !== 0) return;
+  randomSeedHoldTimer = setTimeout(() => {
+    randomSeedHoldTimer = null;
+    randomSeedLongPressed = true;
+    randomSeedHoldCount += 1;
+    if (randomSeedHoldCount === 7) {
+      seedRestrictionsDisabled = true;
+      ui.seedInput.removeAttribute("maxlength");
+      ui.seedPreview.textContent = "种子限制已解除";
+    } else if (randomSeedHoldCount === 8) {
+      seedRestrictionsDisabled = false;
+      randomSeedHoldCount = 0;
+      ui.seedInput.maxLength = 16;
+      ui.seedInput.value = sanitizeSeed(ui.seedInput.value);
+      ui.seedPreview.textContent = "种子限制已恢复";
+    }
+  }, 650);
+});
+for (const type of ["pointerup", "pointercancel", "pointerleave"])
+  ui.randomSeed.addEventListener(type, () => {
+    if (randomSeedHoldTimer) clearTimeout(randomSeedHoldTimer);
+    randomSeedHoldTimer = null;
+  });
+ui.seedInput.oninput = () => {
+  const cleaned = sanitizeSeed(ui.seedInput.value);
+  if (ui.seedInput.value !== cleaned) ui.seedInput.value = cleaned;
+  ui.seedPreview.textContent = cleaned || "随机生成";
+};
 document.querySelectorAll("[data-view]").forEach(
   (b) =>
     (b.onclick = () => {

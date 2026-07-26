@@ -3999,6 +3999,30 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
   padding: 5px 8px;
   font-size: 9px;
 }
+/* Desktop and mobile use the same card-header return placement. */
+.settings-card { position: relative; }
+.settings-card > .back {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: auto;
+  z-index: 12;
+}
+.settings-card > em { display: block; padding-right: 78px; }
+/* The about dossier label needs a complete first line instead of clipping under the header control. */
+.about-card > em { white-space: normal; line-height: 1.45; }
+.mobile-browser .about-card > em { padding-right: 64px; line-height: 1.5; }
+/* Menu cards scroll vertically only; horizontal swipes must not move the interface. */
+.mobile-browser .screen,
+.mobile-browser .settings-card,
+.mobile-browser .panel-scroll-content { overflow-x: hidden; }
+.mobile-browser .panel-scroll-content { touch-action: pan-y; }
+/* The mobile result summary uses narrower actions without reducing tap height. */
+.mobile-browser #result .result-actions { gap: 6px; }
+.mobile-browser #result .result-actions button { min-width: 88px; padding-inline: 8px; }
+/* Move the mobile title slightly to the right without changing desktop placement. */
+.mobile-browser #title h1 { translate: 10px 0; }
+
 @media (max-width: 700px) {
   #title.title-return-glitch h1 {
     animation-name: titleReturnGlitchMobile, titleMicroGlitch, titleBurstMobile;
