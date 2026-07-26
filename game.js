@@ -2778,6 +2778,25 @@ setAdaptiveMobileUi(savedAdaptiveMobileUi === "true");
 setForceLandscape(savedForceLandscape === "true");
 setCustomLayoutEnabled(savedCustomLayoutEnabled === "true");
 applyLayout(viewMode);
+// On touch screens, native range inputs jump when any part of their track is tapped.
+// Only begin a gesture when it starts on the thumb's current hit area.
+function guardMobileRangeThumb(range) {
+  range.addEventListener("pointerdown", (event) => {
+    if (!isMobileBrowser || event.pointerType !== "touch") return;
+    const rect = range.getBoundingClientRect();
+    const min = Number(range.min) || 0;
+    const max = Number(range.max) || 100;
+    const value = Number(range.value);
+    const ratio = max === min ? 0 : (value - min) / (max - min);
+    const thumbX = rect.left + ratio * rect.width;
+    const thumbRadius = 16;
+    if (Math.abs(event.clientX - thumbX) > thumbRadius) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, { capture: true, passive: false });
+}
+document.querySelectorAll('input[type="range"]').forEach(guardMobileRangeThumb);
 ui.sensitivity.oninput = () => setSensitivity(ui.sensitivity.value);
 ui.fov.oninput = () => setFov(ui.fov.value);
 ui.crt.oninput = () => setCrt(ui.crt.value);
