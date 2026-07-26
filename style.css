@@ -3823,16 +3823,21 @@ kbd {
   box-shadow: inset 0 1px 3px #000c, 0 0 0 1px #0008;
   transition: background .16s, border-color .16s, box-shadow .16s;
 }
-.terminal-switch i::after {
+/* The indicator stays on the checkbox face; it never inherits legacy ON/OFF text. */
+.terminal-switch i::after,
+.terminal-switch input:checked + i::after { content: none; }
+.terminal-switch::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 2px;
-  width: 7px;
-  height: 4px;
+  z-index: 1;
+  top: 6px;
+  left: 5px;
+  width: 9px;
+  height: 5px;
   border-bottom: 2px solid #dffff0;
   border-left: 2px solid #dffff0;
   opacity: 0;
+  pointer-events: none;
   transform: rotate(-45deg) scale(.65);
   transition: opacity .12s, transform .16s cubic-bezier(.2,.8,.2,1);
 }
@@ -3842,7 +3847,7 @@ kbd {
   background: linear-gradient(135deg, #1e7f85, #0e383d);
   box-shadow: inset 0 1px 2px #dffff055, 0 0 7px #5dddf166, 0 0 0 1px #0008;
 }
-.terminal-switch input:checked + i::after {
+.terminal-switch:has(input:checked)::after {
   opacity: 1;
   transform: rotate(-45deg) scale(1);
 }
@@ -3853,7 +3858,7 @@ kbd {
 }
 .terminal-switch-compact { width: 20px; height: 20px; }
 .terminal-switch-compact i { top: 3px; left: 3px; width: 12px; height: 12px; }
-.terminal-switch-compact i::after { top: 2px; left: 2px; width: 6px; height: 3px; }
+.terminal-switch-compact::after { top: 6px; left: 4px; width: 8px; height: 4px; }
 .terminal-switch-compact input:checked + i { transform: none; }
 
 .mobile-browser .actions-row .primary,
