@@ -226,7 +226,7 @@
 
       <section id="help" class="screen hidden">
         <button class="back" data-action="title">← 返回</button>
-        <div class="help-card">
+        <div class="settings-card help-card">
           <em>BLINDSPOT PROTOCOL · FIELD MANUAL</em>
           <h2>游戏说明</h2>
           <div class="manual-grid">
@@ -482,20 +482,6 @@
             ▲
           </button>
           <button
-            class="mobile-key left"
-            data-mobile-input="left"
-            aria-label="向左或左转"
-          >
-            ◀
-          </button>
-          <button
-            class="mobile-key right"
-            data-mobile-input="right"
-            aria-label="向右或右转"
-          >
-            ▶
-          </button>
-          <button
             class="mobile-key down"
             data-mobile-input="back"
             aria-label="后退"
@@ -507,6 +493,20 @@
           <div class="joystick-base"><div class="joystick-knob"></div></div>
         </div>
         <div class="mobile-actions">
+          <div class="mobile-look" aria-label="视角转向">
+            <button
+              data-mobile-input="left"
+              aria-label="向左转"
+            >
+              ◀
+            </button>
+            <button
+              data-mobile-input="right"
+              aria-label="向右转"
+            >
+              ▶
+            </button>
+          </div>
           <div class="mobile-waves" aria-label="声呐发射">
             <button
               class="wave-red"
