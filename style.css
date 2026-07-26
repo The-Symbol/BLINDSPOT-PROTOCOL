@@ -3964,8 +3964,8 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 .mobile-browser .energy .bar { display: block; min-width: 72px; }
 .mobile-browser .energy .bar i { display: block; }
 
-/* Shift Q/E/F left by three button widths from their current default. */
-.mobile-browser .mobile-waves { transform: translateX(-174px); }
+/* Shift each Q/E/F button right by one and a half button widths. */
+.mobile-browser .mobile-waves { transform: translateX(-87px); }
 .mobile-browser .mobile-pause { left: 153px; }
 
 /* HUD editor is compact and centred in the lower middle rather than edge-attached. */
@@ -4010,8 +4010,18 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 }
 .settings-card > em { display: block; padding-right: 78px; }
 /* The about dossier label needs a complete first line instead of clipping under the header control. */
-.about-card > em { white-space: normal; line-height: 1.45; }
-.mobile-browser .about-card > em { padding-right: 64px; line-height: 1.5; }
+.about-card > em {
+  min-height: 30px;
+  padding: 2px 90px 4px 0;
+  white-space: normal;
+  line-height: 1.45;
+  overflow: visible;
+}
+.mobile-browser .about-card > em {
+  min-height: 24px;
+  padding: 2px 68px 4px 0;
+  line-height: 1.5;
+}
 /* Menu cards scroll vertically only; horizontal swipes must not move the interface. */
 .mobile-browser .screen,
 .mobile-browser .settings-card,

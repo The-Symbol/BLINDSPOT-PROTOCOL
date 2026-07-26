@@ -583,6 +583,20 @@ function resetRandomSeedHold() {
   if (randomSeedHoldTimer) clearTimeout(randomSeedHoldTimer);
   randomSeedHoldTimer = null;
 }
+function toggleSeedRestrictions() {
+  randomSeedHoldCount += 1;
+  if (randomSeedHoldCount === 7) {
+    seedRestrictionsDisabled = true;
+    ui.seedInput.removeAttribute("maxlength");
+    ui.seedPreview.textContent = "种子限制已解除";
+  } else if (randomSeedHoldCount === 8) {
+    seedRestrictionsDisabled = false;
+    randomSeedHoldCount = 0;
+    ui.seedInput.maxLength = 16;
+    ui.seedInput.value = sanitizeSeed(ui.seedInput.value);
+    ui.seedPreview.textContent = "种子限制已恢复";
+  }
+}
 function randomSeed() {
   return Math.random().toString(36).slice(2, 9).toUpperCase();
 }
@@ -2554,21 +2568,12 @@ ui.randomSeed.onclick = () => {
 };
 ui.randomSeed.addEventListener("pointerdown", (event) => {
   if (event.button != null && event.button !== 0) return;
+  // Desktop uses a context-menu click instead; touch devices retain the long press.
+  if (!isMobileBrowser) return;
   randomSeedHoldTimer = setTimeout(() => {
     randomSeedHoldTimer = null;
     randomSeedLongPressed = true;
-    randomSeedHoldCount += 1;
-    if (randomSeedHoldCount === 7) {
-      seedRestrictionsDisabled = true;
-      ui.seedInput.removeAttribute("maxlength");
-      ui.seedPreview.textContent = "种子限制已解除";
-    } else if (randomSeedHoldCount === 8) {
-      seedRestrictionsDisabled = false;
-      randomSeedHoldCount = 0;
-      ui.seedInput.maxLength = 16;
-      ui.seedInput.value = sanitizeSeed(ui.seedInput.value);
-      ui.seedPreview.textContent = "种子限制已恢复";
-    }
+    toggleSeedRestrictions();
   }, 650);
 });
 for (const type of ["pointerup", "pointercancel", "pointerleave"])
@@ -2576,6 +2581,11 @@ for (const type of ["pointerup", "pointercancel", "pointerleave"])
     if (randomSeedHoldTimer) clearTimeout(randomSeedHoldTimer);
     randomSeedHoldTimer = null;
   });
+ui.randomSeed.addEventListener("contextmenu", (event) => {
+  if (isMobileBrowser) return;
+  event.preventDefault();
+  toggleSeedRestrictions();
+});
 ui.seedInput.oninput = () => {
   const cleaned = sanitizeSeed(ui.seedInput.value);
   if (ui.seedInput.value !== cleaned) ui.seedInput.value = cleaned;
