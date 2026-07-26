@@ -115,6 +115,17 @@ const ui = {
   sfxVolume: document.getElementById("sfx-volume"),
   sfxVolumeValue: document.getElementById("sfx-volume-value"),
   adaptiveMobileUi: document.getElementById("adaptive-mobile-ui"),
+  forceLandscape: document.getElementById("force-landscape"),
+  customLayoutEnabled: document.getElementById("custom-layout-enabled"),
+  customLayoutTools: document.getElementById("custom-layout-tools"),
+  openLayoutEditor: document.getElementById("open-layout-editor"),
+  layoutEditor: document.getElementById("layout-editor"),
+  layoutEditorTitle: document.getElementById("layout-editor-title"),
+  layoutSelectedLabel: document.getElementById("layout-selected-label"),
+  layoutSize: document.getElementById("layout-size"),
+  layoutSizeValue: document.getElementById("layout-size-value"),
+  layoutEditorDone: document.getElementById("layout-editor-done"),
+  layoutEditorReset: document.getElementById("layout-editor-reset"),
   sector: document.getElementById("sector-label"),
   controlGuide: document.getElementById("control-guide"),
   timer: document.getElementById("game-timer"),
@@ -161,7 +172,9 @@ function mobileControlsEnabled() {
   return isMobileBrowser || mobileControlsTest;
 }
 function syncMobileControlsTest() {
-  document.body.classList.toggle("mobile-browser", mobileControlsEnabled());
+  const enabled = mobileControlsEnabled();
+  document.body.classList.toggle("mobile-browser", enabled);
+  document.body.classList.toggle("mobile-experiments-available", enabled);
   const button = document.getElementById("mobile-controls-test");
   button.classList.toggle("active", mobileControlsTest);
   button.setAttribute("aria-pressed", String(mobileControlsTest));
@@ -170,6 +183,11 @@ function syncMobileControlsTest() {
     : "▣ 显示手机操作（测试）";
 }
 const viewport = { width: innerWidth, height: innerHeight };
+const LAYOUT_IDS = [
+  "topbar", "energy", "status", "objective", "sonar-console", "side",
+  "mobile-fullscreen", "mobile-reset", "mobile-move", "mobile-joystick",
+  "mobile-actions", "mobile-waves", "mobile-look", "mobile-pause",
+];
 let maze = null,
   game = fresh("title"),
   last = performance.now(),
@@ -240,6 +258,7 @@ function initRaycastWorker() {
       }
       if (data.type !== "hits" || data.id !== raycastState.pendingId) return;
       raycastState.hits = new Float64Array(data.buffer);
+      raycastState.pendingId = 0;
       raycastState.ready = true;
     };
     worker.onerror = () => {
@@ -255,9 +274,12 @@ function initRaycastWorker() {
 function requestRaycastColumns(cols, fov, maxDistance = 26) {
   initRaycastWorker();
   if (!raycastState.worker || raycastState.failed || !seedText) return false;
+  // A worker can trail a mobile frame; never queue another cast until its latest job returns.
+  if (raycastState.pendingId) return true;
   const id = raycastState.nextId++;
   raycastState.pendingId = id;
   raycastState.cols = cols;
+  raycastState.ready = false;
   raycastState.worker.postMessage({
     type: "cast",
     id,
@@ -873,6 +895,7 @@ function start(ghostReplay = null, playback = false) {
   replayPaused = false;
   updateReplayControls();
   setViewMode(settingsViewMode);
+  applyLayout(settingsViewMode);
   // Resolve the seed now so the mask can display it, but defer heavy work.
   const seed = normalizeSeed();
   const isPK = Boolean(ghostReplay && !playback);
@@ -947,6 +970,10 @@ function buildAndStartGame(seed, ghostReplay, playback) {
     recordReplaySample(replayRecorder, 0, game.player, game.energy, true);
   game.crystals = placeCrystals(seed);
   game.items = placeItems(seed, game.crystals);
+  // Never reuse packed rays from a prior maze/view when a mobile game first appears.
+  raycastState.hits = null;
+  raycastState.ready = false;
+  raycastState.pendingId = 0;
   ui.sector.textContent = `SEED · ${seedText}`;
   ui.controlGuide.textContent =
     viewMode === "3d"
@@ -1832,7 +1859,7 @@ function draw3D() {
   // Kick worker cast for next frame; draw latest completed hits (or sync now).
   const usingWorker = requestRaycastColumns(cols, fov);
   let hits = raycastState.hits;
-  if (!usingWorker || !raycastState.ready || !hits || hits[0] !== cols) {
+  if (!usingWorker || !hits || hits[0] !== cols) {
     hits = castColumnsMainThread(cols, fov);
     raycastState.hits = hits;
     raycastState.ready = true;
@@ -2576,13 +2603,90 @@ function setAdaptiveMobileUi(enabled) {
   else document.documentElement.style.removeProperty("--adaptive-mobile-ui-scale");
   storage.setItem("blindspot-adaptive-mobile-ui", enabled);
 }
+let layoutEditMode = "2d", layoutEditing = false, selectedLayoutId = null, layoutPointer = null;
+function layoutStorageKey(mode = viewMode) { return `blindspot-hud-layout-${mode}`; }
+function loadLayout(mode = viewMode) {
+  try { return JSON.parse(storage.getItem(layoutStorageKey(mode)) || "{}"); } catch (_) { return {}; }
+}
+function applyLayout(mode = viewMode) {
+  const layout = loadLayout(mode);
+  for (const id of LAYOUT_IDS) {
+    const el = document.querySelector(`[data-layout-id="${id}"]`);
+    if (!el) continue;
+    const item = layout[id] || {};
+    el.style.translate = item.x || item.y ? `${item.x || 0}px ${item.y || 0}px` : "";
+    el.style.scale = item.scale || "";
+  }
+}
+function saveLayoutItem(id, patch) {
+  const layout = loadLayout(layoutEditMode);
+  layout[id] = { ...(layout[id] || {}), ...patch };
+  storage.setItem(layoutStorageKey(layoutEditMode), JSON.stringify(layout));
+  applyLayout(layoutEditMode);
+}
+function setCustomLayoutEnabled(enabled) {
+  ui.customLayoutEnabled.checked = enabled;
+  ui.customLayoutTools.classList.toggle("hidden", !enabled);
+  storage.setItem("blindspot-custom-layout-enabled", enabled);
+}
+function setForceLandscape(enabled, fromGesture = false) {
+  ui.forceLandscape.checked = enabled;
+  storage.setItem("blindspot-force-landscape", enabled);
+  if (enabled && fromGesture) requestMobileLandscape(true);
+}
+function openLayoutEditor() {
+  if (!ui.customLayoutEnabled.checked) return;
+  layoutEditMode = document.querySelector("[data-layout-mode].active")?.dataset.layoutMode || "2d";
+  setViewMode(layoutEditMode);
+  start();
+  setTimeout(() => {
+    layoutEditing = true;
+    selectedLayoutId = null;
+    document.body.classList.add("layout-editing");
+    ui.layoutEditor.classList.remove("hidden");
+    ui.layoutEditorTitle.textContent = `编辑 ${layoutEditMode.toUpperCase()} HUD`;
+    ui.layoutSelectedLabel.textContent = "点击元素后拖动；底部滑块调整大小";
+    applyLayout(layoutEditMode);
+  }, prefersReducedMotion() ? 0 : 2800);
+}
+function closeLayoutEditor() {
+  layoutEditing = false;
+  layoutPointer = null;
+  document.body.classList.remove("layout-editing");
+  ui.layoutEditor.classList.add("hidden");
+}
+function resetLayout() {
+  storage.removeItem(layoutStorageKey(layoutEditMode));
+  selectedLayoutId = null;
+  applyLayout(layoutEditMode);
+  ui.layoutSelectedLabel.textContent = "已重置此模式布局";
+}
+function beginLayoutDrag(event) {
+  if (!layoutEditing || !mobileControlsEnabled()) return;
+  const el = event.target.closest("[data-layout-id]");
+  if (!el || el.closest("#layout-editor")) return;
+  event.preventDefault();
+  selectedLayoutId = el.dataset.layoutId;
+  const item = loadLayout(layoutEditMode)[selectedLayoutId] || {};
+  layoutPointer = { id: event.pointerId, x: event.clientX, y: event.clientY, ox: item.x || 0, oy: item.y || 0 };
+  ui.layoutSelectedLabel.textContent = `已选择：${selectedLayoutId}`;
+  ui.layoutSize.value = Math.round((item.scale || 1) * 100);
+  ui.layoutSizeValue.textContent = `${ui.layoutSize.value}%`;
+}
+function moveLayoutDrag(event) {
+  if (!layoutPointer || event.pointerId !== layoutPointer.id) return;
+  saveLayoutItem(selectedLayoutId, { x: Math.round(layoutPointer.ox + event.clientX - layoutPointer.x), y: Math.round(layoutPointer.oy + event.clientY - layoutPointer.y) });
+}
+function endLayoutDrag(event) { if (!event || event.pointerId === layoutPointer?.id) layoutPointer = null; }
 const savedCrt = storage.getItem("blindspot-crt"),
   savedGlow = storage.getItem("blindspot-glow"),
   savedSensitivity = storage.getItem("blindspot-sensitivity"),
   savedFov = storage.getItem("blindspot-fov"),
   savedMusicVolume = storage.getItem("blindspot-music-volume"),
   savedSfxVolume = storage.getItem("blindspot-sfx-volume"),
-  savedAdaptiveMobileUi = storage.getItem("blindspot-adaptive-mobile-ui");
+  savedAdaptiveMobileUi = storage.getItem("blindspot-adaptive-mobile-ui"),
+  savedForceLandscape = storage.getItem("blindspot-force-landscape"),
+  savedCustomLayoutEnabled = storage.getItem("blindspot-custom-layout-enabled");
 if (savedCrt !== null) ui.crt.value = savedCrt;
 if (savedGlow !== null) ui.glow.value = savedGlow;
 if (savedSensitivity !== null) ui.sensitivity.value = savedSensitivity;
@@ -2596,6 +2700,9 @@ setGlow(ui.glow.value);
 setMusicVolume(ui.musicVolume.value);
 setSfxVolume(ui.sfxVolume.value);
 setAdaptiveMobileUi(savedAdaptiveMobileUi === "true");
+setForceLandscape(savedForceLandscape === "true");
+setCustomLayoutEnabled(savedCustomLayoutEnabled === "true");
+applyLayout(viewMode);
 ui.sensitivity.oninput = () => setSensitivity(ui.sensitivity.value);
 ui.fov.oninput = () => setFov(ui.fov.value);
 ui.crt.oninput = () => setCrt(ui.crt.value);
@@ -2603,7 +2710,26 @@ ui.glow.oninput = () => setGlow(ui.glow.value);
 ui.musicVolume.oninput = () => setMusicVolume(ui.musicVolume.value);
 ui.sfxVolume.oninput = () => setSfxVolume(ui.sfxVolume.value);
 ui.adaptiveMobileUi.onchange = () => setAdaptiveMobileUi(ui.adaptiveMobileUi.checked);
-window.addEventListener("resize", syncAdaptiveMobileUiScale);
+ui.forceLandscape.onchange = () => setForceLandscape(ui.forceLandscape.checked, true);
+ui.customLayoutEnabled.onchange = () => setCustomLayoutEnabled(ui.customLayoutEnabled.checked);
+document.querySelectorAll("[data-layout-mode]").forEach((button) => button.onclick = () => {
+  layoutEditMode = button.dataset.layoutMode;
+  document.querySelectorAll("[data-layout-mode]").forEach((item) => item.classList.toggle("active", item === button));
+});
+ui.openLayoutEditor.onclick = openLayoutEditor;
+ui.layoutEditorDone.onclick = closeLayoutEditor;
+ui.layoutEditorReset.onclick = resetLayout;
+ui.layoutSize.oninput = () => {
+  if (!selectedLayoutId) return;
+  const value = Number(ui.layoutSize.value);
+  ui.layoutSizeValue.textContent = `${value}%`;
+  saveLayoutItem(selectedLayoutId, { scale: value / 100 });
+};
+document.addEventListener("pointerdown", beginLayoutDrag, true);
+document.addEventListener("pointermove", moveLayoutDrag, true);
+document.addEventListener("pointerup", endLayoutDrag, true);
+document.addEventListener("pointercancel", endLayoutDrag, true);
+window.addEventListener("resize", () => { syncAdaptiveMobileUiScale(); applyLayout(viewMode); });
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
 // Industrial scroll rails (desktop + mobile) — native overlay bars ignore CSS.

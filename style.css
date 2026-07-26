@@ -2432,7 +2432,6 @@ kbd {
 /* Give the mobile field manual 30px more usable vertical space. */
 .mobile-browser .term-scroll:has(> .settings-card.help-card) > .help-card {
   max-height: calc(100vh - 30px);
-  scale: 0.9;
   transform-origin: center top;
 }
 /* Replay/PK: 30px wider and 20px shorter in the mobile layout. */
@@ -2440,7 +2439,7 @@ kbd {
   width: min(92vw, 470px);
 }
 .mobile-browser .replay-list {
-  max-height: min(calc(43vh - 20px), 320px);
+  max-height: min(calc((43vh - 20px) * 0.9), 288px);
 }
 .mobile-browser .manual-block h3 {
   font-size: 10px;
@@ -2510,8 +2509,7 @@ kbd {
 }
 .mobile-browser .modal {
   padding: 12px;
-  width: min(92vw, 310px);
-  scale: 0.9;
+  width: min(92vw, 280px);
   transform-origin: center center;
 }
 .mobile-browser .modal h2 {
@@ -2528,8 +2526,7 @@ kbd {
   border-radius: 2px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 470px);
-  scale: 0.9;
+  width: min(92vw, 423px);
   transform-origin: center center;
 }
 .mobile-browser .replay-card h2 {
@@ -3628,4 +3625,147 @@ kbd {
     transform: scale(0.9);
     transform-origin: left bottom;
   }
+}
+
+/* ── Mobile menu, HUD, and experimental layout editor refinements ── */
+.mobile-experiment,
+.custom-layout-tools {
+  display: none;
+}
+.mobile-experiments-available .mobile-experiment {
+  display: flex;
+}
+.mobile-experiments-available .custom-layout-tools:not(.hidden) {
+  display: grid;
+}
+.mobile-browser .actions-row .primary,
+.mobile-browser .actions-row .ghost {
+  min-width: 120px;
+  min-height: 46px;
+  padding: 8px 12px;
+}
+.mobile-browser #mobile-controls-test {
+  display: none;
+}
+/* Fixed card headings; only the content below participates in scrolling. */
+.mobile-browser .term-scroll:has(> .display-card),
+.mobile-browser .term-scroll:has(> .help-card),
+.mobile-browser .term-scroll:has(> .about-card) {
+  padding-top: 32px;
+  overflow: visible;
+}
+.mobile-browser .term-scroll > .display-card > em,
+.mobile-browser .term-scroll > .help-card > em,
+.mobile-browser .term-scroll > .about-card > em,
+.mobile-browser .term-scroll > .display-card > h2,
+.mobile-browser .term-scroll > .help-card > h2,
+.mobile-browser .term-scroll > .about-card > h2 {
+  position: sticky;
+  z-index: 2;
+  display: block;
+  background: #0a181d;
+}
+.mobile-browser .term-scroll > .display-card > em,
+.mobile-browser .term-scroll > .help-card > em,
+.mobile-browser .term-scroll > .about-card > em {
+  top: 0;
+  padding-top: 2px;
+}
+.mobile-browser .term-scroll > .display-card > h2,
+.mobile-browser .term-scroll > .help-card > h2,
+.mobile-browser .term-scroll > .about-card > h2 {
+  top: 12px;
+  margin-top: 0;
+  padding-bottom: 8px;
+  box-shadow: 0 8px 8px #0a181d;
+}
+.mobile-browser .term-scroll:has(> .settings-card.help-card) {
+  transform: translateY(-10px);
+}
+.mobile-browser .about-card,
+.mobile-browser .about-card h2,
+.mobile-browser .about-block p,
+.mobile-browser .about-block h3 {
+  font-size: 8px;
+}
+.mobile-browser .about-card h2 { font-size: 13px; }
+.terminal-switch-compact {
+  width: 42px;
+  height: 22px;
+}
+.terminal-switch-compact i {
+  width: 16px;
+  height: 14px;
+}
+.terminal-switch-compact i::after {
+  left: 20px;
+  top: 2px;
+  font-size: 6px;
+}
+.terminal-switch-compact input:checked + i { transform: translateX(20px); }
+.terminal-switch-compact input:checked + i::after { left: -19px; }
+.custom-layout-tools {
+  gap: 8px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px dashed #5dddf155;
+  background: #061317;
+  font: 9px "DM Mono", monospace;
+}
+.custom-layout-tools > div { display: flex; gap: 6px; }
+.custom-layout-tools button { padding: 6px 8px; font-size: 9px; }
+/* Mobile 3D has no need for the desktop-style lower key hint line. */
+.mobile-browser[data-view-mode="3d"] .bottom { display: none; }
+.mobile-browser .mobile-actions {
+  left: max(8px, env(safe-area-inset-left));
+  right: auto;
+  bottom: max(5px, env(safe-area-inset-bottom));
+  width: 205px;
+  height: 130px;
+}
+.mobile-browser .mobile-waves {
+  left: 0;
+  right: auto;
+  bottom: 0;
+}
+.mobile-browser .mobile-waves .wave-red { left: 0; bottom: 0; }
+.mobile-browser .mobile-waves .wave-green { left: 61px; bottom: 0; }
+.mobile-browser .mobile-waves .wave-blue { left: 122px; right: auto; top: auto; bottom: 0; }
+.mobile-browser .mobile-pause { left: 174px; right: auto; bottom: 8px; }
+.mobile-browser[data-view-mode="2d"] .mobile-look {
+  left: 61px;
+  bottom: 66px;
+}
+#layout-editor {
+  z-index: 14;
+  pointer-events: none;
+  background: transparent;
+}
+.layout-editor-bar {
+  position: absolute;
+  right: 8px;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  left: 8px;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid #5dddf188;
+  background: #031014ee;
+  box-shadow: 0 0 18px #5dddf133;
+  pointer-events: auto;
+  font: 9px "DM Mono", monospace;
+}
+.layout-editor-bar label { display: flex; align-items: center; gap: 4px; }
+.layout-editor-bar input { width: 74px; }
+.layout-editor-bar button { padding: 5px 7px; font-size: 9px; }
+.layout-editing [data-layout-id] {
+  outline: 1px dashed #5dddf188;
+  outline-offset: 3px;
+  touch-action: none !important;
+}
+.layout-editing [data-layout-id]:active { outline-color: var(--red); }
+@media (max-width: 560px) {
+  .layout-editor-bar { grid-template-columns: auto 1fr; }
 }

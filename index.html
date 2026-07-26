@@ -220,16 +220,44 @@
               /><output id="sfx-volume-value">70%</output>
             </div></label
           >
-          <label class="setting-row experimental-setting-row" for="adaptive-mobile-ui">
+          <label class="setting-row experimental-setting-row mobile-experiment" for="adaptive-mobile-ui">
             <span
               ><b>实验性：自动界面大小</b
               ><small>根据手机屏幕尺寸缩放游戏界面与操作控件。默认关闭。</small></span
             >
-            <span class="terminal-switch">
+            <span class="terminal-switch terminal-switch-compact">
               <input id="adaptive-mobile-ui" type="checkbox" />
               <i aria-hidden="true"></i>
             </span>
           </label>
+          <label class="setting-row experimental-setting-row mobile-experiment" for="force-landscape">
+            <span
+              ><b>实验性：强制横屏</b
+              ><small>尝试以全屏横屏运行游戏；浏览器不支持时会提示手动横屏。默认关闭。</small></span
+            >
+            <span class="terminal-switch terminal-switch-compact">
+              <input id="force-landscape" type="checkbox" />
+              <i aria-hidden="true"></i>
+            </span>
+          </label>
+          <label class="setting-row experimental-setting-row mobile-experiment" for="custom-layout-enabled">
+            <span
+              ><b>实验性：自定义按键布局</b
+              ><small>开启后可选择 2D 或 3D HUD，拖动并调整所有手机端 HUD 控件。</small></span
+            >
+            <span class="terminal-switch terminal-switch-compact">
+              <input id="custom-layout-enabled" type="checkbox" />
+              <i aria-hidden="true"></i>
+            </span>
+          </label>
+          <div id="custom-layout-tools" class="custom-layout-tools hidden">
+            <b>HUD 编辑模式</b>
+            <div>
+              <button type="button" class="ghost active" data-layout-mode="2d">编辑 2D HUD</button>
+              <button type="button" class="ghost" data-layout-mode="3d">编辑 3D HUD</button>
+            </div>
+            <button id="open-layout-editor" type="button" class="primary">进入布局编辑</button>
+          </div>
           <button class="primary" data-action="display-back">保存并返回</button>
         </div>
       </section>
@@ -409,22 +437,22 @@
             </details>
           </div>
         </div>
-        <header class="topbar">
+        <header class="topbar" data-layout-id="topbar">
           <div class="brand">
             <em>BLINDSPOT PROTOCOL</em
             ><strong id="sector-label">SEED · —</strong>
           </div>
-          <div class="energy">
+          <div class="energy" data-layout-id="energy">
             <span>能源余量</span>
             <div class="bar"><i id="energy-fill"></i></div>
             <b id="energy-text">100%</b>
           </div>
-          <div class="status"><span>视觉模块</span><b>OFFLINE</b></div>
+          <div class="status" data-layout-id="status"><span>视觉模块</span><b>OFFLINE</b></div>
         </header>
-        <div id="objective" class="objective">
+        <div id="objective" class="objective" data-layout-id="objective">
           寻找能源补给站。不要撞上黑暗中的墙。
         </div>
-        <aside class="sonar-console" aria-label="声呐冷却状态">
+        <aside class="sonar-console" data-layout-id="sonar-console" aria-label="声呐冷却状态">
           <div class="console-heading">
             <span>SONAR CHANNELS</span>
             <b>LINK // 03</b>
@@ -449,7 +477,7 @@
           </div>
           <div class="console-foot">COOLDOWN MONITOR · ONLINE</div>
         </aside>
-        <div class="side">
+        <div class="side" data-layout-id="side">
           <button id="restart-btn">↺ 重置</button
           ><button id="pause-btn">Ⅱ 暂停</button>
         </div>
@@ -467,6 +495,7 @@
       <div id="mobile-controls" aria-label="手机游戏控制">
         <button
           class="mobile-fullscreen"
+          data-layout-id="mobile-fullscreen"
           id="mobile-fullscreen-btn"
           type="button"
           aria-label="切换全屏"
@@ -476,6 +505,7 @@
         </button>
         <button
           class="mobile-reset"
+          data-layout-id="mobile-reset"
           id="mobile-reset-btn"
           type="button"
           aria-label="重置"
@@ -483,7 +513,7 @@
         >
           ↺
         </button>
-        <div class="mobile-move">
+        <div class="mobile-move" data-layout-id="mobile-move">
           <button
             class="mobile-key up"
             data-mobile-input="forward"
@@ -499,11 +529,11 @@
             ▼
           </button>
         </div>
-        <div class="mobile-joystick" aria-label="移动摇杆">
+        <div class="mobile-joystick" data-layout-id="mobile-joystick" aria-label="移动摇杆">
           <div class="joystick-base"><div class="joystick-knob"></div></div>
         </div>
-        <div class="mobile-actions">
-          <div class="mobile-look" aria-label="视角转向">
+        <div class="mobile-actions" data-layout-id="mobile-actions">
+          <div class="mobile-look" data-layout-id="mobile-look" aria-label="视角转向">
             <button
               data-mobile-input="left"
               aria-label="向左转"
@@ -517,7 +547,7 @@
               ▶
             </button>
           </div>
-          <div class="mobile-waves" aria-label="声呐发射">
+          <div class="mobile-waves" data-layout-id="mobile-waves" aria-label="声呐发射">
             <button
               class="wave-red"
               data-mobile-wave="red"
@@ -540,6 +570,7 @@
           </div>
           <button
             class="mobile-pause"
+            data-layout-id="mobile-pause"
             type="button"
             data-action="pause"
             aria-label="暂停游戏"
@@ -548,6 +579,16 @@
           </button>
         </div>
       </div>
+
+      <section id="layout-editor" class="overlay hidden" aria-label="自定义 HUD 布局编辑器">
+        <div class="layout-editor-bar">
+          <b id="layout-editor-title">编辑 HUD</b>
+          <span id="layout-selected-label">点击元素后可拖动</span>
+          <label>大小 <input id="layout-size" type="range" min="60" max="160" value="100" /> <output id="layout-size-value">100%</output></label>
+          <button id="layout-editor-reset" type="button" class="ghost">重置此模式</button>
+          <button id="layout-editor-done" type="button" class="primary">完成</button>
+        </div>
+      </section>
 
       <section id="landscape-prompt" class="overlay hidden">
         <div class="modal landscape-modal">
