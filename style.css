@@ -3946,25 +3946,26 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 /* Each editable item scales around its own centre instead of inheriting a parent anchor. */
 [data-layout-id] { transform-origin: center center; }
 /* Energy and system status are siblings of the seed header, so each owns its layout anchor. */
-.energy { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); }
-.status { position: absolute; top: 20px; right: 20px; }
+.energy { position: absolute; top: 38px; left: 50%; transform: translateX(-50%); }
+.status { position: absolute; top: 8px; right: 20px; }
 .mobile-browser .energy,
 .mobile-browser .status { position: absolute; }
-.mobile-browser .energy { top: 84px; right: 10px; left: auto; transform: none; }
-.mobile-browser .status { top: 55px; right: 10px; }
-/* Extra clear separation when both are enabled by a custom layout. */
+/* The objective is the top system hint; energy starts immediately beneath it. */
+.mobile-browser .energy { top: 38px; right: 50%; left: auto; transform: translateX(50%); }
+/* OFFLINE moves to the top edge above its former status location. */
+.mobile-browser .status { top: 6px; right: 10px; }
 .mobile-browser .energy {
   display: grid !important;
   grid-template-columns: auto minmax(72px, 1fr) auto;
   width: min(48vw, 220px);
   gap: 7px;
-  translate: 0 30px;
+  translate: 0 0;
 }
 .mobile-browser .energy .bar { display: block; min-width: 72px; }
 .mobile-browser .energy .bar i { display: block; }
 
-/* Shift Q/E/F right by two button widths and pause left by half a button. */
-.mobile-browser .mobile-waves { transform: translateX(116px); }
+/* Shift Q/E/F left by three button widths from their current default. */
+.mobile-browser .mobile-waves { transform: translateX(-174px); }
 .mobile-browser .mobile-pause { left: 153px; }
 
 /* HUD editor is compact and centred in the lower middle rather than edge-attached. */

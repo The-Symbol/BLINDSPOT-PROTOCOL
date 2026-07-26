@@ -2610,6 +2610,15 @@ function setAdaptiveMobileUi(enabled) {
 }
 let layoutEditMode = "2d", layoutEditing = false, selectedLayoutId = null, layoutPointer = null;
 function layoutStorageKey(mode = viewMode) { return `blindspot-hud-layout-${mode}`; }
+function setLayoutPreviewMode(mode) {
+  layoutEditMode = mode;
+  // Preview only changes HUD visibility/layout. It must never mutate the active run's mode.
+  if (layoutEditing) document.body.dataset.viewMode = mode;
+  document.querySelectorAll("[data-layout-mode]").forEach((item) =>
+    item.classList.toggle("active", item.dataset.layoutMode === mode),
+  );
+  applyLayout(mode);
+}
 function loadLayout(mode = viewMode) {
   try { return JSON.parse(storage.getItem(layoutStorageKey(mode)) || "{}"); } catch (_) { return {}; }
 }
@@ -2641,10 +2650,10 @@ function setForceLandscape(enabled, fromGesture = false) {
 }
 function openLayoutEditor() {
   if (!ui.customLayoutEnabled.checked) return;
-  layoutEditMode = document.querySelector("[data-layout-mode].active")?.dataset.layoutMode || "2d";
+  const selectedMode = document.querySelector("[data-layout-mode].active")?.dataset.layoutMode;
+  layoutEditMode = selectedMode || viewMode;
   // The editor is a static HUD preview: never build or start a maze here.
   if (game.state === "play") return;
-  setViewMode(layoutEditMode);
   snapShow("hud");
   // The preview is intentionally inert: moving a layout item cannot fire HUD actions.
   clearInput();
@@ -2654,12 +2663,14 @@ function openLayoutEditor() {
   ui.layoutEditor.classList.remove("hidden");
   ui.layoutEditorTitle.textContent = `编辑 ${layoutEditMode.toUpperCase()} HUD`;
   ui.layoutSelectedLabel.textContent = "点击元素后拖动；下方滑块调整大小";
-  applyLayout(layoutEditMode);
+  setLayoutPreviewMode(layoutEditMode);
 }
 function closeLayoutEditor() {
   layoutEditing = false;
   layoutPointer = null;
   document.body.classList.remove("layout-editing");
+  // Restore the actual game mode after an in-pause editor preview.
+  document.body.dataset.viewMode = viewMode;
   ui.layoutEditor.classList.add("hidden");
   show("display");
 }
@@ -2722,8 +2733,7 @@ ui.adaptiveMobileUi.onchange = () => setAdaptiveMobileUi(ui.adaptiveMobileUi.che
 ui.forceLandscape.onchange = () => setForceLandscape(ui.forceLandscape.checked, true);
 ui.customLayoutEnabled.onchange = () => setCustomLayoutEnabled(ui.customLayoutEnabled.checked);
 document.querySelectorAll("[data-layout-mode]").forEach((button) => button.onclick = () => {
-  layoutEditMode = button.dataset.layoutMode;
-  document.querySelectorAll("[data-layout-mode]").forEach((item) => item.classList.toggle("active", item === button));
+  setLayoutPreviewMode(button.dataset.layoutMode);
 });
 ui.openLayoutEditor.onclick = openLayoutEditor;
 ui.layoutEditorDone.onclick = closeLayoutEditor;
