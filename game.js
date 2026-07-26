@@ -188,7 +188,7 @@ const viewport = { width: innerWidth, height: innerHeight };
 const LAYOUT_IDS = [
   "game-timer", "topbar", "energy", "status", "objective", "sonar-console", "side",
   "mobile-fullscreen", "mobile-reset", "mobile-move", "mobile-joystick",
-  "mobile-waves", "mobile-look", "mobile-pause",
+  "wave-red", "wave-green", "wave-blue", "mobile-look", "mobile-pause",
 ];
 let maze = null,
   game = fresh("title"),
@@ -2480,11 +2480,9 @@ document.querySelectorAll("[data-action]").forEach(
       else if (a === "replays") openReplays();
       else if (a === "display") {
         displayReturn = game.state === "pause" ? "pause" : "title";
-        document.body.classList.toggle("pause-display-settings", displayReturn === "pause");
         renderViewModeOption(viewMode);
         show("display");
       } else if (a === "display-back") {
-        document.body.classList.remove("pause-display-settings");
         show(displayReturn);
       } else if (a === "settings-back") {
         if (settingsReturn === "pause") {
@@ -2746,12 +2744,19 @@ document.getElementById("pause-btn").onclick = pauseGame;
 // Keep panel headings fixed outside of their scroll viewport. This gives the
 // terminal rail one stable, untransformed element to measure on every screen.
 function prepareScrollablePanels() {
+  // Put every menu return control in its card header so mobile can lock it to
+  // the actual panel's top-right corner rather than the viewport edge.
+  document.querySelectorAll(".screen").forEach((screen) => {
+    const card = screen.querySelector(":scope > .settings-card");
+    const back = screen.querySelector(":scope > .back");
+    if (card && back) card.prepend(back);
+  });
   document.querySelectorAll(".settings-card:not(.replay-card)").forEach((card) => {
     if (card.querySelector(":scope > .panel-scroll-content")) return;
     const content = document.createElement("div");
     content.className = "panel-scroll-content";
     for (const child of [...card.children]) {
-      if (!child.matches("em, h2")) content.append(child);
+      if (!child.matches("em, h2, .back")) content.append(child);
     }
     card.append(content);
   });

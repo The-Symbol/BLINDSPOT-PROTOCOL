@@ -3863,6 +3863,8 @@ body.layout-editing #hud [data-layout-id] {
 }
 body.layout-editing #hud button,
 body.layout-editing #mobile-controls button { pointer-events: none; }
+/* Q/E/F are independent editor targets; capture-phase drag handling still blocks their actions. */
+body.layout-editing #mobile-controls button[data-layout-id] { pointer-events: auto; }
 body.layout-editing #game { filter: blur(8px) brightness(.38); }
 #layout-editor { z-index: 32; pointer-events: none; background: transparent; backdrop-filter: none; }
 .layout-editor-bar {
@@ -3951,11 +3953,19 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 .mobile-browser .energy { top: 84px; right: 10px; left: auto; transform: none; }
 .mobile-browser .status { top: 55px; right: 10px; }
 /* Extra clear separation when both are enabled by a custom layout. */
-.mobile-browser .energy { translate: 0 30px; }
+.mobile-browser .energy {
+  display: grid !important;
+  grid-template-columns: auto minmax(72px, 1fr) auto;
+  width: min(48vw, 220px);
+  gap: 7px;
+  translate: 0 30px;
+}
+.mobile-browser .energy .bar { display: block; min-width: 72px; }
+.mobile-browser .energy .bar i { display: block; }
 
-/* Shift the sound controls right by one wave button and pause by one quarter button. */
-.mobile-browser .mobile-waves { transform: translateX(58px); }
-.mobile-browser .mobile-pause { left: 185px; }
+/* Shift Q/E/F right by two button widths and pause left by half a button. */
+.mobile-browser .mobile-waves { transform: translateX(116px); }
+.mobile-browser .mobile-pause { left: 153px; }
 
 /* HUD editor is compact and centred in the lower middle rather than edge-attached. */
 .layout-editor-bar {
@@ -3978,25 +3988,15 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 }
 .mobile-browser .help-card,
 .mobile-browser .about-card { width: min(92vw, 420px); }
-.mobile-browser .screen > .back {
-  top: 10px;
-  right: max(10px, env(safe-area-inset-right));
+.mobile-browser .settings-card { position: relative; }
+.mobile-browser .settings-card > .back {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   left: auto;
   z-index: 12;
   padding: 5px 8px;
   font-size: 9px;
-}
-/* Pause → settings is intentionally a narrow, centred tuning panel. */
-.pause-display-settings #display {
-  align-items: center;
-  justify-content: center;
-}
-.pause-display-settings #display .settings-card {
-  width: min(140px, 42vw);
-}
-.pause-display-settings #display .panel-scroll-content,
-.pause-display-settings #display .settings-card > .term-scroll {
-  max-height: calc(100vh - 150px);
 }
 @media (max-width: 700px) {
   #title.title-return-glitch h1 {
