@@ -3798,7 +3798,12 @@ kbd {
 .term-scroll > .settings-card { max-height: none; overflow: hidden !important; }
 
 /* Industrial checkbox: custom-drawn and aligned to the setting row edge. */
-.setting-row > .terminal-switch { margin-left: auto; }
+.setting-row > .terminal-switch {
+  flex: 0 0 22px;
+  width: 22px;
+  min-width: 22px;
+  margin-left: auto;
+}
 .terminal-switch {
   width: 22px;
   height: 22px;
@@ -3840,6 +3845,11 @@ kbd {
 .terminal-switch input:checked + i::after {
   opacity: 1;
   transform: rotate(-45deg) scale(1);
+}
+.setting-row > .terminal-switch-compact {
+  flex-basis: 20px;
+  width: 20px;
+  min-width: 20px;
 }
 .terminal-switch-compact { width: 20px; height: 20px; }
 .terminal-switch-compact i { top: 3px; left: 3px; width: 12px; height: 12px; }
