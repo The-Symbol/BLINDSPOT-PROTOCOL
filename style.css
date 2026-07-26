@@ -2429,6 +2429,17 @@ kbd {
   padding-top: 60px;
   padding-bottom: 20px;
 }
+/* Give the mobile field manual 30px more usable vertical space. */
+.mobile-browser .term-scroll:has(> .settings-card.help-card) > .help-card {
+  max-height: calc(100vh - 30px);
+}
+/* Replay/PK: 30px wider and 20px shorter in the mobile layout. */
+.mobile-browser .replay-card {
+  width: min(92vw, 470px);
+}
+.mobile-browser .replay-list {
+  max-height: min(calc(43vh - 20px), 320px);
+}
 .mobile-browser .manual-block h3 {
   font-size: 10px;
   margin: 0 0 5px;
@@ -2497,7 +2508,7 @@ kbd {
 }
 .mobile-browser .modal {
   padding: 12px;
-  width: min(82vw, 250px);
+  width: min(92vw, 280px);
 }
 .mobile-browser .modal h2 {
   font-size: 17px;
@@ -2567,6 +2578,18 @@ kbd {
 .mobile-browser .mode-select button {
   font-size: 10px;
   padding: 5px 8px;
+}
+.experimental-setting-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+/* Experimental: scale the mobile gameplay HUD and controls to the viewport. */
+.mobile-browser.adaptive-mobile-ui #hud,
+.mobile-browser.adaptive-mobile-ui #mobile-controls {
+  transform: scale(clamp(0.82, min(100vw / 844, 100vh / 390), 1.16));
+  transform-origin: center center;
 }
 
 /* ═══ Launch mask: fullscreen industrial terminal overlay ═══ */

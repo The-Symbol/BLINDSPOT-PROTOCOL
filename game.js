@@ -114,6 +114,7 @@ const ui = {
   musicVolumeValue: document.getElementById("music-volume-value"),
   sfxVolume: document.getElementById("sfx-volume"),
   sfxVolumeValue: document.getElementById("sfx-volume-value"),
+  adaptiveMobileUi: document.getElementById("adaptive-mobile-ui"),
   sector: document.getElementById("sector-label"),
   controlGuide: document.getElementById("control-guide"),
   timer: document.getElementById("game-timer"),
@@ -2563,12 +2564,18 @@ function setSfxVolume(value) {
   ui.sfxVolumeValue.textContent = `${n}%`;
   storage.setItem("blindspot-sfx-volume", n);
 }
+function setAdaptiveMobileUi(enabled) {
+  document.body.classList.toggle("adaptive-mobile-ui", enabled);
+  ui.adaptiveMobileUi.checked = enabled;
+  storage.setItem("blindspot-adaptive-mobile-ui", enabled);
+}
 const savedCrt = storage.getItem("blindspot-crt"),
   savedGlow = storage.getItem("blindspot-glow"),
   savedSensitivity = storage.getItem("blindspot-sensitivity"),
   savedFov = storage.getItem("blindspot-fov"),
   savedMusicVolume = storage.getItem("blindspot-music-volume"),
-  savedSfxVolume = storage.getItem("blindspot-sfx-volume");
+  savedSfxVolume = storage.getItem("blindspot-sfx-volume"),
+  savedAdaptiveMobileUi = storage.getItem("blindspot-adaptive-mobile-ui");
 if (savedCrt !== null) ui.crt.value = savedCrt;
 if (savedGlow !== null) ui.glow.value = savedGlow;
 if (savedSensitivity !== null) ui.sensitivity.value = savedSensitivity;
@@ -2581,12 +2588,14 @@ setCrt(ui.crt.value);
 setGlow(ui.glow.value);
 setMusicVolume(ui.musicVolume.value);
 setSfxVolume(ui.sfxVolume.value);
+setAdaptiveMobileUi(savedAdaptiveMobileUi === "true");
 ui.sensitivity.oninput = () => setSensitivity(ui.sensitivity.value);
 ui.fov.oninput = () => setFov(ui.fov.value);
 ui.crt.oninput = () => setCrt(ui.crt.value);
 ui.glow.oninput = () => setGlow(ui.glow.value);
 ui.musicVolume.oninput = () => setMusicVolume(ui.musicVolume.value);
 ui.sfxVolume.oninput = () => setSfxVolume(ui.sfxVolume.value);
+ui.adaptiveMobileUi.onchange = () => setAdaptiveMobileUi(ui.adaptiveMobileUi.checked);
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
 // Industrial scroll rails (desktop + mobile) — native overlay bars ignore CSS.
