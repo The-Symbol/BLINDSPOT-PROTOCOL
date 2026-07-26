@@ -3797,9 +3797,10 @@ kbd {
 .term-scroll:has(> .settings-card) { width: auto; }
 .term-scroll > .settings-card { max-height: none; overflow: hidden !important; }
 
-/* Standard SWITCH toggle: compact pill track with a positive physical thumb. */
+/* Standard SWITCH toggle: two-thumb-width pill track, aligned to the row edge. */
+.setting-row > .terminal-switch { margin-left: auto; }
 .terminal-switch {
-  width: 40px;
+  width: 32px;
   height: 22px;
   border-radius: 999px;
   border-color: #78908a88;
@@ -3819,14 +3820,14 @@ kbd {
 }
 .terminal-switch i::after { content: none; }
 .terminal-switch input:checked + i {
-  transform: translateX(18px);
+  transform: translateX(10px);
   border-color: #dffff0;
   background: linear-gradient(145deg, #dffff0, #38b9c8);
   box-shadow: 0 0 8px #5dddf188, 0 1px 3px #000b;
 }
-.terminal-switch-compact { width: 34px; height: 20px; }
+.terminal-switch-compact { width: 28px; height: 20px; }
 .terminal-switch-compact i { width: 12px; height: 12px; }
-.terminal-switch-compact input:checked + i { transform: translateX(15px); }
+.terminal-switch-compact input:checked + i { transform: translateX(8px); }
 
 .mobile-browser .actions-row .primary,
 .mobile-browser .actions-row .ghost {
