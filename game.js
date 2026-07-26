@@ -186,7 +186,7 @@ function syncMobileControlsTest() {
 }
 const viewport = { width: innerWidth, height: innerHeight };
 const LAYOUT_IDS = [
-  "topbar", "energy", "status", "objective", "sonar-console", "side",
+  "game-timer", "topbar", "energy", "status", "objective", "sonar-console", "side",
   "mobile-fullscreen", "mobile-reset", "mobile-move", "mobile-joystick",
   "mobile-waves", "mobile-look", "mobile-pause",
 ];
@@ -406,9 +406,10 @@ function applyMusicForScreen(name) {
 function restartTitleGlitch() {
   const titleEl = ui.title;
   if (!titleEl) return;
-  titleEl.classList.remove("title-boot", "title-return");
+  // Return uses the same sliced RGB glitch language as boot, but with a wider burst.
+  titleEl.classList.remove("title-boot", "title-return", "title-return-glitch");
   void titleEl.offsetWidth;
-  titleEl.classList.add("title-boot");
+  titleEl.classList.add("title-return-glitch");
 }
 
 function snapShow(name) {
@@ -2479,9 +2480,11 @@ document.querySelectorAll("[data-action]").forEach(
       else if (a === "replays") openReplays();
       else if (a === "display") {
         displayReturn = game.state === "pause" ? "pause" : "title";
+        document.body.classList.toggle("pause-display-settings", displayReturn === "pause");
         renderViewModeOption(viewMode);
         show("display");
       } else if (a === "display-back") {
+        document.body.classList.remove("pause-display-settings");
         show(displayReturn);
       } else if (a === "settings-back") {
         if (settingsReturn === "pause") {

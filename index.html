@@ -412,7 +412,7 @@
       </section>
 
       <section id="hud" class="hidden">
-        <div id="game-timer" class="game-timer">00:00.0</div>
+        <div id="game-timer" class="game-timer" data-layout-id="game-timer">00:00.0</div>
         <div
           id="replay-controls"
           class="replay-controls hidden"
@@ -442,13 +442,13 @@
             <em>BLINDSPOT PROTOCOL</em
             ><strong id="sector-label">SEED · —</strong>
           </div>
-          <div class="energy" data-layout-id="energy">
-            <span>能源余量</span>
-            <div class="bar"><i id="energy-fill"></i></div>
-            <b id="energy-text">100%</b>
-          </div>
-          <div class="status" data-layout-id="status"><span>视觉模块</span><b>OFFLINE</b></div>
         </header>
+        <div class="energy" data-layout-id="energy">
+          <span>能源余量</span>
+          <div class="bar"><i id="energy-fill"></i></div>
+          <b id="energy-text">100%</b>
+        </div>
+        <div class="status" data-layout-id="status"><span>视觉模块</span><b>OFFLINE</b></div>
         <div id="objective" class="objective" data-layout-id="objective">
           寻找能源补给站。不要撞上黑暗中的墙。
         </div>

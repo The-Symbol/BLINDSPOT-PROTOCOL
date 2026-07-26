@@ -3922,3 +3922,93 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
   .layout-editor-bar input[type="range"] { width: 100%; }
   .layout-editor-bar button { padding: 4px 3px; font-size: 7px; }
 }
+
+/* ── Follow-up mobile HUD and panel alignment ── */
+/* Returning to the title repeats its sliced RGB boot language with a larger strike. */
+#title.title-return-glitch h1 {
+  animation:
+    titleReturnGlitch 1.35s steps(2, end) forwards,
+    titleMicroGlitch 0.42s steps(2, end) 1.35s infinite,
+    titleBurst 5s steps(1, end) 1.35s infinite;
+}
+@keyframes titleReturnGlitch {
+  0% { opacity: .18; transform: translateX(-126px) skewX(-15deg); filter: contrast(1.8) saturate(2); text-shadow: 28px 0 var(--red), -30px 0 var(--blue); clip-path: inset(18% 0 48% 0); }
+  8% { opacity: 1; transform: translateX(-78px) skewX(11deg); text-shadow: -22px 0 var(--red), 24px 0 var(--blue); clip-path: inset(55% 0 8% 0); }
+  18% { transform: translateX(-58px) skewX(-9deg); filter: hue-rotate(38deg) contrast(1.55); text-shadow: 18px 0 #dffff0, -18px 0 var(--red); clip-path: inset(7% 0 66% 0); }
+  30% { transform: translateX(-31px) skewX(7deg); filter: saturate(1.45); text-shadow: -13px 0 var(--blue), 14px 0 var(--red); clip-path: inset(47% 0 12% 0); }
+  45% { transform: translateX(-50px); filter: contrast(1.3); text-shadow: 10px 0 var(--red), -11px 0 var(--blue); clip-path: inset(13% 0 35% 0); }
+  62% { transform: translateX(-42px); filter: none; text-shadow: none; clip-path: inset(0); }
+  100% { opacity: 1; transform: translateX(-42px); filter: none; text-shadow: none; clip-path: inset(0); }
+}
+
+/* Each editable item scales around its own centre instead of inheriting a parent anchor. */
+[data-layout-id] { transform-origin: center center; }
+/* Energy and system status are siblings of the seed header, so each owns its layout anchor. */
+.energy { position: absolute; top: 58px; left: 50%; transform: translateX(-50%); }
+.status { position: absolute; top: 20px; right: 20px; }
+.mobile-browser .energy,
+.mobile-browser .status { position: absolute; }
+.mobile-browser .energy { top: 84px; right: 10px; left: auto; transform: none; }
+.mobile-browser .status { top: 55px; right: 10px; }
+/* Extra clear separation when both are enabled by a custom layout. */
+.mobile-browser .energy { translate: 0 30px; }
+
+/* Shift the sound controls right by one wave button and pause by one quarter button. */
+.mobile-browser .mobile-waves { transform: translateX(58px); }
+.mobile-browser .mobile-pause { left: 185px; }
+
+/* HUD editor is compact and centred in the lower middle rather than edge-attached. */
+.layout-editor-bar {
+  right: auto;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: min(24vw, 230px);
+  transform: translateX(-50%);
+}
+@media (max-width: 560px) {
+  .layout-editor-bar { width: 24vw; min-width: 0; }
+  .layout-editor-bar > span { font-size: 6px; }
+}
+
+/* Mobile panels share the compact settings-card footprint; their return control lives inside its top-right corner. */
+.mobile-browser .screen > .settings-card,
+.mobile-browser .screen > .term-scroll,
+.mobile-browser .screen > .help-card {
+  width: min(92vw, 420px);
+}
+.mobile-browser .help-card,
+.mobile-browser .about-card { width: min(92vw, 420px); }
+.mobile-browser .screen > .back {
+  top: 10px;
+  right: max(10px, env(safe-area-inset-right));
+  left: auto;
+  z-index: 12;
+  padding: 5px 8px;
+  font-size: 9px;
+}
+/* Pause → settings is intentionally a narrow, centred tuning panel. */
+.pause-display-settings #display {
+  align-items: center;
+  justify-content: center;
+}
+.pause-display-settings #display .settings-card {
+  width: min(140px, 42vw);
+}
+.pause-display-settings #display .panel-scroll-content,
+.pause-display-settings #display .settings-card > .term-scroll {
+  max-height: calc(100vh - 150px);
+}
+@media (max-width: 700px) {
+  #title.title-return-glitch h1 {
+    animation-name: titleReturnGlitchMobile, titleMicroGlitch, titleBurstMobile;
+    animation-duration: 1.2s, .42s, 5s;
+    animation-delay: 0s, 1.2s, 1.2s;
+  }
+  @keyframes titleReturnGlitchMobile {
+    0% { opacity: .18; transform: translateX(-92px) skewX(-15deg); filter: contrast(1.8) saturate(2); text-shadow: 20px 0 var(--red), -22px 0 var(--blue); clip-path: inset(18% 0 48% 0); }
+    12% { opacity: 1; transform: translateX(-53px) skewX(11deg); text-shadow: -17px 0 var(--red), 18px 0 var(--blue); clip-path: inset(55% 0 8% 0); }
+    30% { transform: translateX(-14px) skewX(-8deg); filter: hue-rotate(38deg) contrast(1.55); text-shadow: 13px 0 #dffff0, -13px 0 var(--red); clip-path: inset(7% 0 66% 0); }
+    48% { transform: translateX(-35px); filter: contrast(1.3); text-shadow: -10px 0 var(--blue), 10px 0 var(--red); clip-path: inset(13% 0 35% 0); }
+    66%, 100% { opacity: 1; transform: translateX(-24px); filter: none; text-shadow: none; clip-path: inset(0); }
+  }
+}
