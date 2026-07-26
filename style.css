@@ -4086,7 +4086,7 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 .mobile-browser #ui:has(.replay-controls:not(.hidden)) { z-index: 9; }
 .mobile-browser .replay-controls {
   z-index: 12;
-  bottom: max(8px, env(safe-area-inset-bottom));
+  bottom: max(26px, calc(env(safe-area-inset-bottom) + 18px));
   max-width: calc(100vw - 16px);
   gap: 3px;
 }
