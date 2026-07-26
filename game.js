@@ -187,6 +187,14 @@ function syncMobileControlsTest() {
     : "▣ 显示手机操作（测试）";
 }
 const viewport = { width: innerWidth, height: innerHeight };
+function useForcedLandscapeFallback() {
+  return document.body.classList.contains("forced-landscape-fallback");
+}
+function layoutViewportSize() {
+  return useForcedLandscapeFallback()
+    ? { width: innerHeight, height: innerWidth }
+    : { width: innerWidth, height: innerHeight };
+}
 const LAYOUT_IDS = [
   "game-timer", "topbar", "energy", "status", "objective", "sonar-console", "side",
   "mobile-fullscreen", "mobile-reset", "mobile-move", "mobile-joystick",
@@ -645,8 +653,15 @@ function openSettings(from = game.state === "pause" ? "pause" : "title") {
 function isLandscape() {
   return innerWidth >= innerHeight;
 }
+function syncForcedLandscapeFallback(enabled) {
+  const fallback = Boolean(enabled && isMobileBrowser && !isLandscape());
+  document.body.classList.toggle("forced-landscape-fallback", fallback);
+  if (fallback) hideLandscapePrompt();
+  resize();
+  applyLayout(viewMode);
+}
 function showLandscapePrompt() {
-  if (isMobileBrowser && !isLandscape())
+  if (isMobileBrowser && !isLandscape() && !ui.forceLandscape.checked)
     ui.landscapePrompt.classList.remove("hidden");
 }
 function hideLandscapePrompt() {
@@ -661,15 +676,17 @@ async function requestMobileLandscape(fromGesture = false) {
     width: () => innerWidth,
     height: () => innerHeight,
   });
-  if (result.dismissPrompt) hideLandscapePrompt();
+  syncForcedLandscapeFallback(ui.forceLandscape.checked && !result.locked);
+  if (result.locked || ui.forceLandscape.checked || result.dismissPrompt) hideLandscapePrompt();
   else showLandscapePrompt();
-  if (result.failed && fromGesture)
+  if (result.failed && fromGesture && !ui.forceLandscape.checked)
     say("无法自动锁定横屏；可手动旋转设备，当前仍允许继续。", 4);
   return result.locked;
 }
 requestMobileLandscape();
 window.addEventListener("orientationchange", () => {
-  if (isLandscape()) hideLandscapePrompt();
+  syncForcedLandscapeFallback(ui.forceLandscape.checked);
+  if (isLandscape() || ui.forceLandscape.checked) hideLandscapePrompt();
   else showLandscapePrompt();
 });
 document.getElementById("enable-landscape-btn").onclick = () =>
@@ -1501,18 +1518,19 @@ function fail() {
   finish("D", false);
 }
 function resize() {
+  const { width, height } = layoutViewportSize();
   const dpr = Math.min(devicePixelRatio || 1, 2),
     renderScale = Math.max(0.65, dpr * (1 - crtAmount * 0.45)),
-    backingWidth = Math.round(innerWidth * renderScale),
-    backingHeight = Math.round(innerHeight * renderScale);
+    backingWidth = Math.round(width * renderScale),
+    backingHeight = Math.round(height * renderScale);
   if (
-    viewport.width !== innerWidth ||
-    viewport.height !== innerHeight ||
+    viewport.width !== width ||
+    viewport.height !== height ||
     canvas.width !== backingWidth ||
     canvas.height !== backingHeight
   ) {
-    viewport.width = innerWidth;
-    viewport.height = innerHeight;
+    viewport.width = width;
+    viewport.height = height;
     canvas.width = backingWidth;
     canvas.height = backingHeight;
     ctx.setTransform(renderScale, 0, 0, renderScale, 0, 0);
@@ -2680,7 +2698,9 @@ function loadLayout(mode = viewMode) {
   try { return JSON.parse(storage.getItem(layoutStorageKey(mode)) || "{}"); } catch (_) { return {}; }
 }
 function applyLayout(mode = viewMode) {
-  const layout = loadLayout(mode);
+  // The portrait fallback presents the stock horizontal arrangement; saved edits
+  // return intact as soon as native landscape or normal portrait mode is used.
+  const layout = useForcedLandscapeFallback() ? {} : loadLayout(mode);
   for (const id of LAYOUT_IDS) {
     const el = document.querySelector(`[data-layout-id="${id}"]`);
     if (!el) continue;
@@ -2704,7 +2724,8 @@ function setCustomLayoutEnabled(enabled) {
 function setForceLandscape(enabled, fromGesture = false) {
   ui.forceLandscape.checked = enabled;
   storage.setItem("blindspot-force-landscape", enabled);
-  if (enabled && fromGesture) requestMobileLandscape(true);
+  syncForcedLandscapeFallback(enabled);
+  if (enabled) requestMobileLandscape(fromGesture);
 }
 function openLayoutEditor() {
   if (!ui.customLayoutEnabled.checked) return;
@@ -2833,7 +2854,11 @@ document.addEventListener("pointerdown", beginLayoutDrag, true);
 document.addEventListener("pointermove", moveLayoutDrag, true);
 document.addEventListener("pointerup", endLayoutDrag, true);
 document.addEventListener("pointercancel", endLayoutDrag, true);
-window.addEventListener("resize", () => { syncAdaptiveMobileUiScale(); applyLayout(viewMode); });
+window.addEventListener("resize", () => {
+  syncForcedLandscapeFallback(ui.forceLandscape.checked);
+  syncAdaptiveMobileUiScale();
+  applyLayout(viewMode);
+});
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
 // Keep panel headings fixed outside of their scroll viewport. This gives the

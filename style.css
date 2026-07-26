@@ -4082,6 +4082,51 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 /* The mobile result summary uses narrower actions without reducing tap height. */
 .mobile-browser #result .result-actions { gap: 6px; }
 .mobile-browser #result .result-actions button { min-width: 88px; padding-inline: 8px; }
+
+/* Browser orientation locks are unavailable on many phones. Keep the entire
+   application in a landscape coordinate system while the handset is portrait. */
+.forced-landscape-fallback #game,
+.forced-landscape-fallback #ui,
+.forced-landscape-fallback #launch-mask,
+.forced-landscape-fallback #crt-overlay {
+  position: fixed;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: 100vh;
+  height: 100vw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+}
+.forced-landscape-fallback #game { touch-action: none; }
+/* Restore the ordinary horizontal HUD arrangement instead of portrait rules. */
+.forced-landscape-fallback .mobile-actions {
+  left: max(8px, env(safe-area-inset-left));
+  right: auto;
+  bottom: max(5px, env(safe-area-inset-bottom));
+  width: 205px;
+  height: 130px;
+}
+.forced-landscape-fallback .mobile-waves {
+  left: 0;
+  right: auto;
+  bottom: 0;
+  transform: translateX(-87px);
+}
+.forced-landscape-fallback .mobile-waves .wave-red { left: 0; bottom: 0; }
+.forced-landscape-fallback .mobile-waves .wave-green { left: 61px; bottom: 0; }
+.forced-landscape-fallback .mobile-waves .wave-blue { left: 122px; right: auto; top: auto; bottom: 0; }
+.forced-landscape-fallback .mobile-pause { left: 153px; right: auto; bottom: 8px; }
+.forced-landscape-fallback[data-view-mode="3d"] .mobile-joystick,
+.forced-landscape-fallback .mobile-move {
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+}
+.forced-landscape-fallback[data-view-mode="2d"] .mobile-look {
+  left: 61px;
+  bottom: 66px;
+}
 /* Move the mobile title slightly to the right without changing desktop placement. */
 .mobile-browser #title h1 { translate: 10px 0; }
 
