@@ -2564,9 +2564,16 @@ function setSfxVolume(value) {
   ui.sfxVolumeValue.textContent = `${n}%`;
   storage.setItem("blindspot-sfx-volume", n);
 }
+function syncAdaptiveMobileUiScale() {
+  if (!document.body.classList.contains("adaptive-mobile-ui")) return;
+  const scale = Math.max(0.82, Math.min(1.16, Math.min(innerWidth / 844, innerHeight / 390)));
+  document.documentElement.style.setProperty("--adaptive-mobile-ui-scale", scale.toFixed(3));
+}
 function setAdaptiveMobileUi(enabled) {
   document.body.classList.toggle("adaptive-mobile-ui", enabled);
   ui.adaptiveMobileUi.checked = enabled;
+  if (enabled) syncAdaptiveMobileUiScale();
+  else document.documentElement.style.removeProperty("--adaptive-mobile-ui-scale");
   storage.setItem("blindspot-adaptive-mobile-ui", enabled);
 }
 const savedCrt = storage.getItem("blindspot-crt"),
@@ -2596,6 +2603,7 @@ ui.glow.oninput = () => setGlow(ui.glow.value);
 ui.musicVolume.oninput = () => setMusicVolume(ui.musicVolume.value);
 ui.sfxVolume.oninput = () => setSfxVolume(ui.sfxVolume.value);
 ui.adaptiveMobileUi.onchange = () => setAdaptiveMobileUi(ui.adaptiveMobileUi.checked);
+window.addEventListener("resize", syncAdaptiveMobileUiScale);
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
 // Industrial scroll rails (desktop + mobile) — native overlay bars ignore CSS.

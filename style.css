@@ -2432,6 +2432,8 @@ kbd {
 /* Give the mobile field manual 30px more usable vertical space. */
 .mobile-browser .term-scroll:has(> .settings-card.help-card) > .help-card {
   max-height: calc(100vh - 30px);
+  scale: 0.9;
+  transform-origin: center top;
 }
 /* Replay/PK: 30px wider and 20px shorter in the mobile layout. */
 .mobile-browser .replay-card {
@@ -2508,7 +2510,9 @@ kbd {
 }
 .mobile-browser .modal {
   padding: 12px;
-  width: min(92vw, 280px);
+  width: min(92vw, 310px);
+  scale: 0.9;
+  transform-origin: center center;
 }
 .mobile-browser .modal h2 {
   font-size: 17px;
@@ -2524,7 +2528,9 @@ kbd {
   border-radius: 2px;
 }
 .mobile-browser .replay-card {
-  width: min(92vw, 440px);
+  width: min(92vw, 470px);
+  scale: 0.9;
+  transform-origin: center center;
 }
 .mobile-browser .replay-card h2 {
   font-size: 13px;
@@ -2579,16 +2585,62 @@ kbd {
   font-size: 10px;
   padding: 5px 8px;
 }
-.experimental-setting-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--blue);
+.terminal-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 58px;
+  height: 26px;
+  border: 1px solid #5dddf166;
+  background:
+    repeating-linear-gradient(90deg, #5dddf112 0 1px, transparent 1px 8px),
+    #031014;
+  box-shadow: inset 0 0 12px #000a, 0 0 8px #5dddf122;
   cursor: pointer;
 }
-/* Experimental: scale the mobile gameplay HUD and controls to the viewport. */
+.terminal-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.terminal-switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 18px;
+  border: 1px solid #78908a;
+  background: linear-gradient(180deg, #334440, #162421);
+  box-shadow: inset 0 0 0 1px #0008;
+  transition: transform 0.18s steps(3, end), border-color 0.18s, background 0.18s;
+}
+.terminal-switch i::after {
+  content: "OFF";
+  position: absolute;
+  left: 27px;
+  top: 3px;
+  color: #78908a;
+  font: 7px "DM Mono", monospace;
+  letter-spacing: 0.5px;
+}
+.terminal-switch input:checked + i {
+  transform: translateX(28px);
+  border-color: var(--blue);
+  background: linear-gradient(180deg, #5dddf1, #1d7380);
+  box-shadow: inset 0 0 0 1px #dffff044, 0 0 9px #5dddf166;
+}
+.terminal-switch input:checked + i::after {
+  content: "ON";
+  left: -25px;
+  color: var(--blue);
+}
+.terminal-switch:focus-within {
+  outline: 1px solid var(--blue);
+  outline-offset: 2px;
+}
+/* Experimental: JS computes this value from the live viewport. */
 .mobile-browser.adaptive-mobile-ui #hud,
 .mobile-browser.adaptive-mobile-ui #mobile-controls {
-  transform: scale(clamp(0.82, min(100vw / 844, 100vh / 390), 1.16));
+  transform: scale(var(--adaptive-mobile-ui-scale, 1));
   transform-origin: center center;
 }
 
