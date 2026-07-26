@@ -1033,6 +1033,9 @@ function buildAndStartGame(seed, ghostReplay, playback) {
       : "2D：W/S 前后 · A/D / ←→ 转向";
   setLegends();
   snapShow("hud");
+  // Playback state is established immediately above; make controls visible here
+  // rather than relying only on the earlier screen-transition timing.
+  ui.replayControls.classList.toggle("hidden", !playback);
   // PK uses the race theme; normal runs and passive playback use background.
   if (game.challenge) music.playRace(800);
   else music.playBackground(800);

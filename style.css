@@ -4082,6 +4082,24 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 /* The mobile result summary uses narrower actions without reducing tap height. */
 .mobile-browser #result .result-actions { gap: 6px; }
 .mobile-browser #result .result-actions button { min-width: 88px; padding-inline: 8px; }
+/* Replay controls sit above the mobile touch layer and remain usable in 2D/3D. */
+.mobile-browser #ui:has(.replay-controls:not(.hidden)) { z-index: 9; }
+.mobile-browser .replay-controls {
+  z-index: 12;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  max-width: calc(100vw - 16px);
+  gap: 3px;
+}
+.mobile-browser .replay-controls-left,
+.mobile-browser .replay-controls-right { gap: 3px; }
+.mobile-browser .replay-controls button,
+.mobile-browser .replay-speed-menu summary {
+  min-width: 36px;
+  padding: 6px 5px;
+  font-size: 8px;
+}
+.mobile-browser .replay-controls #replay-play { min-width: 62px; }
+.mobile-browser .replay-speed-options { z-index: 1; }
 
 /* Browser orientation locks are unavailable on many phones. Keep the entire
    application in a landscape coordinate system while the handset is portrait. */
