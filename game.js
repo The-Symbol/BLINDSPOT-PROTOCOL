@@ -124,6 +124,8 @@ const ui = {
   layoutSelectedLabel: document.getElementById("layout-selected-label"),
   layoutSize: document.getElementById("layout-size"),
   layoutSizeValue: document.getElementById("layout-size-value"),
+  layoutOpacity: document.getElementById("layout-opacity"),
+  layoutOpacityValue: document.getElementById("layout-opacity-value"),
   layoutEditorDone: document.getElementById("layout-editor-done"),
   layoutEditorReset: document.getElementById("layout-editor-reset"),
   sector: document.getElementById("sector-label"),
@@ -2685,6 +2687,7 @@ function applyLayout(mode = viewMode) {
     const item = layout[id] || {};
     el.style.translate = item.x || item.y ? `${item.x || 0}px ${item.y || 0}px` : "";
     el.style.scale = item.scale || "";
+    el.style.opacity = item.opacity == null ? "" : item.opacity;
   }
 }
 function saveLayoutItem(id, patch) {
@@ -2717,7 +2720,7 @@ function openLayoutEditor() {
   document.body.classList.add("layout-editing");
   ui.layoutEditor.classList.remove("hidden");
   ui.layoutEditorTitle.textContent = `编辑 ${layoutEditMode.toUpperCase()} HUD`;
-  ui.layoutSelectedLabel.textContent = "点击元素后拖动；下方滑块调整大小";
+  ui.layoutSelectedLabel.textContent = "点击元素后拖动；下方滑块调整大小与透明度";
   setLayoutPreviewMode(layoutEditMode);
 }
 function closeLayoutEditor() {
@@ -2747,6 +2750,8 @@ function beginLayoutDrag(event) {
   ui.layoutSelectedLabel.textContent = `已选择：${selectedLayoutId}`;
   ui.layoutSize.value = Math.round((item.scale || 1) * 100);
   ui.layoutSizeValue.textContent = `${ui.layoutSize.value}%`;
+  ui.layoutOpacity.value = Math.round((item.opacity == null ? 1 : item.opacity) * 100);
+  ui.layoutOpacityValue.textContent = `${ui.layoutOpacity.value}%`;
 }
 function moveLayoutDrag(event) {
   if (!layoutPointer || event.pointerId !== layoutPointer.id) return;
@@ -2817,6 +2822,12 @@ ui.layoutSize.oninput = () => {
   const value = Number(ui.layoutSize.value);
   ui.layoutSizeValue.textContent = `${value}%`;
   saveLayoutItem(selectedLayoutId, { scale: value / 100 });
+};
+ui.layoutOpacity.oninput = () => {
+  if (!selectedLayoutId) return;
+  const value = Number(ui.layoutOpacity.value);
+  ui.layoutOpacityValue.textContent = `${value}%`;
+  saveLayoutItem(selectedLayoutId, { opacity: value / 100 });
 };
 document.addEventListener("pointerdown", beginLayoutDrag, true);
 document.addEventListener("pointermove", moveLayoutDrag, true);
