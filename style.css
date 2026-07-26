@@ -3797,17 +3797,36 @@ kbd {
 .term-scroll:has(> .settings-card) { width: auto; }
 .term-scroll > .settings-card { max-height: none; overflow: hidden !important; }
 
-/* Keep the switch thumb size, but remove the overly long background travel. */
-.terminal-switch { width: 36px; height: 22px; }
-.terminal-switch i { top: 2px; left: 2px; width: 17px; height: 16px; }
-.terminal-switch i::after { left: 21px; top: 3px; font-size: 6px; }
-.terminal-switch input:checked + i { transform: translateX(15px); }
-.terminal-switch input:checked + i::after { left: -20px; }
-.terminal-switch-compact { width: 28px; height: 20px; }
-.terminal-switch-compact i { width: 14px; height: 14px; }
-.terminal-switch-compact i::after { left: 17px; top: 2px; font-size: 5px; }
-.terminal-switch-compact input:checked + i { transform: translateX(12px); }
-.terminal-switch-compact input:checked + i::after { left: -17px; }
+/* Standard SWITCH toggle: compact pill track with a positive physical thumb. */
+.terminal-switch {
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  border-color: #78908a88;
+  background: #071216;
+  box-shadow: inset 0 1px 4px #000b, 0 0 0 1px #0006;
+}
+.terminal-switch i {
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #9aada7;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #d4e4de, #63746f);
+  box-shadow: 0 1px 3px #000b;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), background .18s, border-color .18s;
+}
+.terminal-switch i::after { content: none; }
+.terminal-switch input:checked + i {
+  transform: translateX(18px);
+  border-color: #dffff0;
+  background: linear-gradient(145deg, #dffff0, #38b9c8);
+  box-shadow: 0 0 8px #5dddf188, 0 1px 3px #000b;
+}
+.terminal-switch-compact { width: 34px; height: 20px; }
+.terminal-switch-compact i { width: 12px; height: 12px; }
+.terminal-switch-compact input:checked + i { transform: translateX(15px); }
 
 .mobile-browser .actions-row .primary,
 .mobile-browser .actions-row .ghost {
