@@ -3797,16 +3797,16 @@ kbd {
 .term-scroll:has(> .settings-card) { width: auto; }
 .term-scroll > .settings-card { max-height: none; overflow: hidden !important; }
 
-/* Shorter terminal switches with self-contained OFF/ON labels. */
-.terminal-switch { width: 46px; height: 22px; }
+/* Keep the switch thumb size, but remove the overly long background travel. */
+.terminal-switch { width: 38px; height: 22px; }
 .terminal-switch i { top: 2px; left: 2px; width: 17px; height: 16px; }
 .terminal-switch i::after { left: 21px; top: 3px; font-size: 6px; }
-.terminal-switch input:checked + i { transform: translateX(24px); }
+.terminal-switch input:checked + i { transform: translateX(15px); }
 .terminal-switch input:checked + i::after { left: -20px; }
-.terminal-switch-compact { width: 38px; height: 20px; }
+.terminal-switch-compact { width: 30px; height: 20px; }
 .terminal-switch-compact i { width: 14px; height: 14px; }
 .terminal-switch-compact i::after { left: 17px; top: 2px; font-size: 5px; }
-.terminal-switch-compact input:checked + i { transform: translateX(20px); }
+.terminal-switch-compact input:checked + i { transform: translateX(12px); }
 .terminal-switch-compact input:checked + i::after { left: -17px; }
 
 .mobile-browser .actions-row .primary,
