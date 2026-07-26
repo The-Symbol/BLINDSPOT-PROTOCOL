@@ -3644,9 +3644,10 @@ kbd {
   min-height: 46px;
   padding: 8px 12px;
 }
-.mobile-browser #mobile-controls-test {
-  display: none;
-}
+/* A real mobile browser does not need the diagnostic button, but preserve it
+   on desktop while its test-mode preview is active so it can be toggled off. */
+.mobile-browser #mobile-controls-test { display: none; }
+.mobile-controls-test-active #mobile-controls-test { display: inline-flex; }
 /* Fixed card headings; only the content below participates in scrolling. */
 .mobile-browser .term-scroll:has(> .display-card),
 .mobile-browser .term-scroll:has(> .help-card),
@@ -3768,4 +3769,156 @@ kbd {
 .layout-editing [data-layout-id]:active { outline-color: var(--red); }
 @media (max-width: 560px) {
   .layout-editor-bar { grid-template-columns: auto 1fr; }
+}
+
+/* ── Stable panel viewports and compact mobile controls ── */
+/* Headers stay in the card shell; the rail tracks only this real scroll area. */
+.settings-card:not(.replay-card) {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+}
+.settings-card:not(.replay-card) > .term-scroll {
+  display: block;
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100vh - 150px);
+}
+.panel-scroll-content {
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100vh - 150px);
+  overflow: auto;
+  box-sizing: border-box;
+}
+/* Earlier card-wrapping rules are retained for old screens; new panels scroll inside their card. */
+.term-scroll:has(> .settings-card) { width: auto; }
+.term-scroll > .settings-card { max-height: none; overflow: hidden !important; }
+
+/* Shorter terminal switches with self-contained OFF/ON labels. */
+.terminal-switch { width: 46px; height: 22px; }
+.terminal-switch i { top: 2px; left: 2px; width: 17px; height: 16px; }
+.terminal-switch i::after { left: 21px; top: 3px; font-size: 6px; }
+.terminal-switch input:checked + i { transform: translateX(24px); }
+.terminal-switch input:checked + i::after { left: -20px; }
+.terminal-switch-compact { width: 38px; height: 20px; }
+.terminal-switch-compact i { width: 14px; height: 14px; }
+.terminal-switch-compact i::after { left: 17px; top: 2px; font-size: 5px; }
+.terminal-switch-compact input:checked + i { transform: translateX(20px); }
+.terminal-switch-compact input:checked + i::after { left: -17px; }
+
+.mobile-browser .actions-row .primary,
+.mobile-browser .actions-row .ghost {
+  min-width: 108px;
+  min-height: 40px;
+  padding: 6px 10px;
+}
+.mobile-browser #help {
+  padding-top: 34px;
+  padding-bottom: 12px;
+}
+.mobile-browser .term-scroll:has(> .settings-card.help-card),
+.mobile-browser .term-scroll:has(> .display-card),
+.mobile-browser .term-scroll:has(> .help-card),
+.mobile-browser .term-scroll:has(> .about-card) {
+  padding-top: 0;
+  overflow: hidden;
+  transform: none;
+}
+.mobile-browser .settings-card:not(.replay-card) > .term-scroll {
+  max-height: calc(100vh - 108px);
+}
+.mobile-browser .panel-scroll-content {
+  max-height: calc(100vh - 108px);
+}
+.mobile-browser .settings-card > em,
+.mobile-browser .settings-card > h2 {
+  position: static;
+  box-shadow: none;
+}
+
+/* All Q/E/F, pause, and 2D turn controls are anchored on the right. */
+.mobile-browser .mobile-actions {
+  left: auto;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(5px, env(safe-area-inset-bottom));
+}
+.mobile-browser .mobile-waves { left: auto; right: 0; }
+.mobile-browser .mobile-waves .wave-red { left: 0; right: auto; bottom: 0; }
+.mobile-browser .mobile-waves .wave-green { left: 61px; right: auto; bottom: 0; }
+.mobile-browser .mobile-waves .wave-blue { left: 122px; right: auto; top: auto; bottom: 0; }
+.mobile-browser .mobile-pause { left: 174px; right: auto; bottom: 8px; }
+.mobile-browser[data-view-mode="2d"] .mobile-look { left: 61px; right: auto; bottom: 66px; }
+
+/* Static layout preview must sit above every blur or transition layer. */
+body.layout-editing #hud,
+body.layout-editing #mobile-controls { z-index: 31; }
+body.layout-editing #mobile-controls { display: block; }
+body.layout-editing #mobile-controls [data-layout-id],
+body.layout-editing #hud [data-layout-id] {
+  pointer-events: auto;
+  user-select: none;
+}
+body.layout-editing #hud button,
+body.layout-editing #mobile-controls button { pointer-events: none; }
+body.layout-editing #game { filter: blur(8px) brightness(.38); }
+#layout-editor { z-index: 32; pointer-events: none; background: transparent; backdrop-filter: none; }
+.layout-editor-bar {
+  left: auto;
+  right: max(8px, env(safe-area-inset-right));
+  width: min(31vw, 300px);
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  background:
+    repeating-linear-gradient(90deg, #5dddf10b 0 1px, transparent 1px 8px),
+    #031014f5;
+}
+.layout-editor-bar > b,
+.layout-editor-bar > span { grid-column: 1; }
+.layout-editor-bar label { min-width: 0; flex-wrap: wrap; }
+.layout-editor-bar button { width: 100%; }
+.layout-editor-bar input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 88px;
+  height: 18px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.layout-editor-bar input[type="range"]::-webkit-slider-runnable-track {
+  height: 7px;
+  border: 1px solid #5dddf188;
+  background: repeating-linear-gradient(90deg, #5dddf155 0 1px, transparent 1px 6px), #061317;
+  box-shadow: inset 0 0 8px #000b;
+}
+.layout-editor-bar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 11px;
+  height: 16px;
+  margin-top: -6px;
+  border: 1px solid #dffff0;
+  border-radius: 0;
+  background: linear-gradient(90deg, #1b6976 0 35%, #dffff0 35% 55%, #1b6976 55%);
+  box-shadow: 0 0 8px #5dddf199;
+}
+.layout-editor-bar input[type="range"]::-moz-range-track {
+  height: 7px;
+  border: 1px solid #5dddf188;
+  background: repeating-linear-gradient(90deg, #5dddf155 0 1px, transparent 1px 6px), #061317;
+}
+.layout-editor-bar input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 15px;
+  border: 1px solid #dffff0;
+  border-radius: 0;
+  background: #3a9aab;
+  box-shadow: 0 0 8px #5dddf199;
+}
+@media (max-width: 560px) {
+  .layout-editor-bar { width: 31vw; min-width: 0; }
+  .layout-editor-bar input[type="range"] { width: 100%; }
+  .layout-editor-bar button { padding: 4px 3px; font-size: 7px; }
 }

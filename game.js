@@ -174,6 +174,8 @@ function mobileControlsEnabled() {
 function syncMobileControlsTest() {
   const enabled = mobileControlsEnabled();
   document.body.classList.toggle("mobile-browser", enabled);
+  // Keep the test toggle visible on desktop after it enables the mobile preview.
+  document.body.classList.toggle("mobile-controls-test-active", mobileControlsTest && !isMobileBrowser);
   document.body.classList.toggle("mobile-experiments-available", enabled);
   const button = document.getElementById("mobile-controls-test");
   button.classList.toggle("active", mobileControlsTest);
@@ -186,7 +188,7 @@ const viewport = { width: innerWidth, height: innerHeight };
 const LAYOUT_IDS = [
   "topbar", "energy", "status", "objective", "sonar-console", "side",
   "mobile-fullscreen", "mobile-reset", "mobile-move", "mobile-joystick",
-  "mobile-actions", "mobile-waves", "mobile-look", "mobile-pause",
+  "mobile-waves", "mobile-look", "mobile-pause",
 ];
 let maze = null,
   game = fresh("title"),
@@ -401,6 +403,14 @@ function applyMusicForScreen(name) {
     music.playTitle(name === "title" ? 1000 : 600);
 }
 
+function restartTitleGlitch() {
+  const titleEl = ui.title;
+  if (!titleEl) return;
+  titleEl.classList.remove("title-boot", "title-return");
+  void titleEl.offsetWidth;
+  titleEl.classList.add("title-boot");
+}
+
 function snapShow(name) {
   ui.replayControls.classList.toggle(
     "hidden",
@@ -413,6 +423,7 @@ function snapShow(name) {
     el.classList.toggle("hidden", k !== name);
   }
   activeScreen = name;
+  if (name === "title") restartTitleGlitch();
   // Screens start as display:none; remeasure custom rails after they become visible.
   queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
   applyMusicForScreen(name);
@@ -549,14 +560,7 @@ async function show(name, options = {}) {
     }
     activeScreen = name;
     // Returning to title: re-trigger the boot-in glitch animation on h1.
-    if (name === "title") {
-      const titleEl = ui.title;
-      if (titleEl) {
-        titleEl.classList.remove("title-boot", "title-return");
-        void titleEl.offsetWidth; // force reflow
-        titleEl.classList.add("title-boot");
-      }
-    }
+    if (name === "title") restartTitleGlitch();
     queueMicrotask(() => terminalScrolls.forEach((h) => h.refresh?.()));
   })();
 
@@ -2637,23 +2641,26 @@ function setForceLandscape(enabled, fromGesture = false) {
 function openLayoutEditor() {
   if (!ui.customLayoutEnabled.checked) return;
   layoutEditMode = document.querySelector("[data-layout-mode].active")?.dataset.layoutMode || "2d";
+  // The editor is a static HUD preview: never build or start a maze here.
+  if (game.state === "play") return;
   setViewMode(layoutEditMode);
-  start();
-  setTimeout(() => {
-    layoutEditing = true;
-    selectedLayoutId = null;
-    document.body.classList.add("layout-editing");
-    ui.layoutEditor.classList.remove("hidden");
-    ui.layoutEditorTitle.textContent = `编辑 ${layoutEditMode.toUpperCase()} HUD`;
-    ui.layoutSelectedLabel.textContent = "点击元素后拖动；底部滑块调整大小";
-    applyLayout(layoutEditMode);
-  }, prefersReducedMotion() ? 0 : 2800);
+  snapShow("hud");
+  // The preview is intentionally inert: moving a layout item cannot fire HUD actions.
+  clearInput();
+  layoutEditing = true;
+  selectedLayoutId = null;
+  document.body.classList.add("layout-editing");
+  ui.layoutEditor.classList.remove("hidden");
+  ui.layoutEditorTitle.textContent = `编辑 ${layoutEditMode.toUpperCase()} HUD`;
+  ui.layoutSelectedLabel.textContent = "点击元素后拖动；下方滑块调整大小";
+  applyLayout(layoutEditMode);
 }
 function closeLayoutEditor() {
   layoutEditing = false;
   layoutPointer = null;
   document.body.classList.remove("layout-editing");
   ui.layoutEditor.classList.add("hidden");
+  show("display");
 }
 function resetLayout() {
   storage.removeItem(layoutStorageKey(layoutEditMode));
@@ -2664,8 +2671,9 @@ function resetLayout() {
 function beginLayoutDrag(event) {
   if (!layoutEditing || !mobileControlsEnabled()) return;
   const el = event.target.closest("[data-layout-id]");
-  if (!el || el.closest("#layout-editor")) return;
+  if (!el || el.closest("#layout-editor") || !LAYOUT_IDS.includes(el.dataset.layoutId)) return;
   event.preventDefault();
+  event.stopPropagation();
   selectedLayoutId = el.dataset.layoutId;
   const item = loadLayout(layoutEditMode)[selectedLayoutId] || {};
   layoutPointer = { id: event.pointerId, x: event.clientX, y: event.clientY, ox: item.x || 0, oy: item.y || 0 };
@@ -2732,10 +2740,23 @@ document.addEventListener("pointercancel", endLayoutDrag, true);
 window.addEventListener("resize", () => { syncAdaptiveMobileUiScale(); applyLayout(viewMode); });
 document.getElementById("restart-btn").onclick = resetMap;
 document.getElementById("pause-btn").onclick = pauseGame;
+// Keep panel headings fixed outside of their scroll viewport. This gives the
+// terminal rail one stable, untransformed element to measure on every screen.
+function prepareScrollablePanels() {
+  document.querySelectorAll(".settings-card:not(.replay-card)").forEach((card) => {
+    if (card.querySelector(":scope > .panel-scroll-content")) return;
+    const content = document.createElement("div");
+    content.className = "panel-scroll-content";
+    for (const child of [...card.children]) {
+      if (!child.matches("em, h2")) content.append(child);
+    }
+    card.append(content);
+  });
+}
+prepareScrollablePanels();
 // Industrial scroll rails (desktop + mobile) — native overlay bars ignore CSS.
-// Replay/PK card itself must not get an outer rail; only the inner list scrolls.
 const terminalScrolls = attachTerminalScrollAll(
-  ".replay-list, .settings-card:not(.replay-card)",
+  ".replay-list, .panel-scroll-content",
 );
 // Prefetch encrypted replays after first paint so "回放与 PK" opens without a stall.
 setTimeout(() => {
