@@ -2010,9 +2010,6 @@ kbd {
   .topbar {
     grid-template-columns: 1fr auto;
   }
-  .energy {
-    display: none;
-  }
   .objective {
     top: 5px;
     max-width: 85vw;
