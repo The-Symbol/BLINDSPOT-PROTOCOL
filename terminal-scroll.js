@@ -38,24 +38,12 @@ export function attachTerminalScroll(viewport) {
 
   /** @type {number | null} */
   let dragPointer = null;
-  let dragStartX = 0;
   let dragStartY = 0;
   let dragStartScroll = 0;
   let dragFromRail = false;
 
-  // The fallback displays a landscape layout by rotating it 90°. Its logical
-  // vertical axis then runs along the physical horizontal axis.
-  function isForcedLandscapeFallback() {
-    return document.body.classList.contains("forced-landscape-fallback");
-  }
-
   function railPointerY(event, rect) {
-    if (!isForcedLandscapeFallback()) return event.clientY - rect.top;
-    // Use the longer on-screen rail axis. This works whether the browser
-    // reports geometry before or after applying the fallback rotation.
-    return rect.width > rect.height
-      ? rect.right - event.clientX
-      : event.clientY - rect.top;
+    return event.clientY - rect.top;
   }
   let frame = 0;
   let docListening = false;
@@ -134,15 +122,9 @@ export function attachTerminalScroll(viewport) {
       return;
     }
 
-    const dx = dragStartX - event.clientX;
-    const dy = event.clientY - dragStartY;
-    // Rotated fallback WebViews disagree on whether PointerEvent coordinates
-    // are reported in physical or transformed layout space. Accept the user's
-    // dominant drag axis so a visually vertical drag always scrolls, while
-    // retaining horizontal-rail support on engines using physical coordinates.
-    const delta = isForcedLandscapeFallback()
-      ? (Math.abs(dy) >= Math.abs(dx) ? dy : dx)
-      : dy;
+    // The rail is visually vertical in every mode, including the rotated
+    // fallback, so horizontal drags must never affect the scroll position.
+    const delta = event.clientY - dragStartY;
     const scrollPerPx = m.maxScroll / m.maxThumbTop;
     viewport.scrollTop = clamp(
       dragStartScroll + delta * scrollPerPx,
@@ -200,7 +182,6 @@ export function attachTerminalScroll(viewport) {
     event.preventDefault();
     event.stopPropagation();
     dragPointer = event.pointerId;
-    dragStartX = event.clientX;
     dragStartY = event.clientY;
     dragStartScroll = viewport.scrollTop;
     dragFromRail = false;
@@ -224,7 +205,6 @@ export function attachTerminalScroll(viewport) {
     scrollFromThumbTop(y);
     // Begin continuous scrub from this position.
     dragPointer = event.pointerId;
-    dragStartX = event.clientX;
     dragStartY = event.clientY;
     dragStartScroll = viewport.scrollTop;
     dragFromRail = true;

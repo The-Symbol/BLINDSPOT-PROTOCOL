@@ -4146,6 +4146,21 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
   height: 100%;
   max-height: 100%;
 }
+/* The scrollable element is the inner .panel-scroll-content, not the card. */
+.forced-landscape-fallback .settings-card:not(.replay-card) {
+  height: calc(100vw - 24px);
+  max-height: calc(100vw - 24px);
+}
+.forced-landscape-fallback .settings-card:not(.replay-card) > .term-scroll {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+.forced-landscape-fallback .panel-scroll-content {
+  height: 100%;
+  max-height: none;
+}
 .forced-landscape-fallback .replay-list {
   max-height: max(96px, min(calc(100vw - 190px), 220px));
 }
