@@ -4133,8 +4133,18 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
 .forced-landscape-fallback .term-scroll:has(> .settings-card.help-card) {
   width: min(88vh, 760px);
 }
-.forced-landscape-fallback .term-scroll > .settings-card {
+/*
+ * Make the scroll viewport an explicit logical-landscape height. A max-height
+ * alone can be discarded by portrait mobile rules, leaving the setting card
+ * at its full content height and clipping it at the transformed screen edge.
+ */
+.forced-landscape-fallback .term-scroll:has(> .settings-card) {
+  height: calc(100vw - 24px);
   max-height: calc(100vw - 24px);
+}
+.forced-landscape-fallback .term-scroll > .settings-card {
+  height: 100%;
+  max-height: 100%;
 }
 .forced-landscape-fallback .replay-list {
   max-height: max(96px, min(calc(100vw - 190px), 220px));

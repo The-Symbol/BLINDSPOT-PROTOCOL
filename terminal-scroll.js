@@ -50,7 +50,10 @@ export function attachTerminalScroll(viewport) {
   }
 
   function railPointerY(event, rect) {
-    return isForcedLandscapeFallback()
+    if (!isForcedLandscapeFallback()) return event.clientY - rect.top;
+    // Use the longer on-screen rail axis. This works whether the browser
+    // reports geometry before or after applying the fallback rotation.
+    return rect.width > rect.height
       ? rect.right - event.clientX
       : event.clientY - rect.top;
   }
@@ -131,9 +134,15 @@ export function attachTerminalScroll(viewport) {
       return;
     }
 
+    const dx = dragStartX - event.clientX;
+    const dy = event.clientY - dragStartY;
+    // Rotated fallback WebViews disagree on whether PointerEvent coordinates
+    // are reported in physical or transformed layout space. Accept the user's
+    // dominant drag axis so a visually vertical drag always scrolls, while
+    // retaining horizontal-rail support on engines using physical coordinates.
     const delta = isForcedLandscapeFallback()
-      ? dragStartX - event.clientX
-      : event.clientY - dragStartY;
+      ? (Math.abs(dy) >= Math.abs(dx) ? dy : dx)
+      : dy;
     const scrollPerPx = m.maxScroll / m.maxThumbTop;
     viewport.scrollTop = clamp(
       dragStartScroll + delta * scrollPerPx,
