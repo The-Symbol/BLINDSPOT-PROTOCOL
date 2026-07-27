@@ -38,9 +38,22 @@ export function attachTerminalScroll(viewport) {
 
   /** @type {number | null} */
   let dragPointer = null;
+  let dragStartX = 0;
   let dragStartY = 0;
   let dragStartScroll = 0;
   let dragFromRail = false;
+
+  // The fallback displays a landscape layout by rotating it 90°. Its logical
+  // vertical axis then runs along the physical horizontal axis.
+  function isForcedLandscapeFallback() {
+    return document.body.classList.contains("forced-landscape-fallback");
+  }
+
+  function railPointerY(event, rect) {
+    return isForcedLandscapeFallback()
+      ? rect.right - event.clientX
+      : event.clientY - rect.top;
+  }
   let frame = 0;
   let docListening = false;
 
@@ -113,15 +126,17 @@ export function attachTerminalScroll(viewport) {
     if (dragFromRail) {
       // Scrub relative to rail geometry (rail click-jump + drag).
       const rect = rail.getBoundingClientRect();
-      const y = event.clientY - rect.top - m.thumbH / 2;
+      const y = railPointerY(event, rect) - m.thumbH / 2;
       scrollFromThumbTop(y);
       return;
     }
 
-    const dy = event.clientY - dragStartY;
+    const delta = isForcedLandscapeFallback()
+      ? dragStartX - event.clientX
+      : event.clientY - dragStartY;
     const scrollPerPx = m.maxScroll / m.maxThumbTop;
     viewport.scrollTop = clamp(
-      dragStartScroll + dy * scrollPerPx,
+      dragStartScroll + delta * scrollPerPx,
       0,
       m.maxScroll,
     );
@@ -176,6 +191,7 @@ export function attachTerminalScroll(viewport) {
     event.preventDefault();
     event.stopPropagation();
     dragPointer = event.pointerId;
+    dragStartX = event.clientX;
     dragStartY = event.clientY;
     dragStartScroll = viewport.scrollTop;
     dragFromRail = false;
@@ -195,10 +211,11 @@ export function attachTerminalScroll(viewport) {
     event.stopPropagation();
     const rect = rail.getBoundingClientRect();
     const m = metrics();
-    const y = event.clientY - rect.top - m.thumbH / 2;
+    const y = railPointerY(event, rect) - m.thumbH / 2;
     scrollFromThumbTop(y);
     // Begin continuous scrub from this position.
     dragPointer = event.pointerId;
+    dragStartX = event.clientX;
     dragStartY = event.clientY;
     dragStartScroll = viewport.scrollTop;
     dragFromRail = true;

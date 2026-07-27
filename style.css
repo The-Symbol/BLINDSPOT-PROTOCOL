@@ -4115,6 +4115,30 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
   transform-origin: center center;
 }
 .forced-landscape-fallback #game { touch-action: none; }
+/*
+ * CSS viewport units retain the handset's physical portrait axes after the
+ * application is rotated. Use vw for the logical landscape height and vh for
+ * its width, otherwise portrait-only mobile rules make scroll panels taller
+ * than the visible rotated interface and clip their lower content.
+ */
+.forced-landscape-fallback .screen {
+  overflow: hidden;
+  padding: 12px;
+}
+.forced-landscape-fallback .term-scroll:has(> .settings-card),
+.forced-landscape-fallback .replay-card {
+  width: min(88vh, 620px);
+}
+.forced-landscape-fallback .term-scroll:has(> .settings-card.about-card),
+.forced-landscape-fallback .term-scroll:has(> .settings-card.help-card) {
+  width: min(88vh, 760px);
+}
+.forced-landscape-fallback .term-scroll > .settings-card {
+  max-height: calc(100vw - 24px);
+}
+.forced-landscape-fallback .replay-list {
+  max-height: max(96px, min(calc(100vw - 190px), 220px));
+}
 /* Restore the ordinary horizontal HUD arrangement instead of portrait rules. */
 .forced-landscape-fallback .mobile-actions {
   left: max(8px, env(safe-area-inset-left));
