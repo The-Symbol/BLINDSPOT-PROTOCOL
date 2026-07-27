@@ -42,6 +42,21 @@ export function attachTerminalScroll(viewport) {
   let dragStartScroll = 0;
   let dragFromRail = false;
 
+  function isForcedLandscapeFallback() {
+    return document.body.classList.contains("forced-landscape-fallback");
+  }
+
+  function syncFallbackRailGeometry() {
+    if (isForcedLandscapeFallback()) {
+      // The whole UI rotates 90° in the fallback. Counter-rotate the rail so
+      // it remains vertical on the physical screen; the logical width is its
+      // physical height after that counter-rotation.
+      rail.style.height = `${wrap.clientWidth}px`;
+    } else if (rail.style.height) {
+      rail.style.height = "";
+    }
+  }
+
   function railPointerY(event, rect) {
     return event.clientY - rect.top;
   }
@@ -49,6 +64,7 @@ export function attachTerminalScroll(viewport) {
   let docListening = false;
 
   function metrics() {
+    syncFallbackRailGeometry();
     const viewH = viewport.clientHeight;
     const scrollH = viewport.scrollHeight;
     const maxScroll = Math.max(0, scrollH - viewH);

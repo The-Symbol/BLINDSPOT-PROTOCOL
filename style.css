@@ -4115,6 +4115,17 @@ body.layout-editing #game { filter: blur(8px) brightness(.38); }
   transform-origin: center center;
 }
 .forced-landscape-fallback #game { touch-action: none; }
+/* Keep custom rails vertical on the physical screen despite the rotated UI. */
+.forced-landscape-fallback .term-scroll-rail {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  transform: rotate(-90deg) translateX(-100%);
+  transform-origin: top right;
+}
+.forced-landscape-fallback .term-scroll-thumb {
+  transform-origin: top left;
+}
 /*
  * CSS viewport units retain the handset's physical portrait axes after the
  * application is rotated. Use vw for the logical landscape height and vh for
